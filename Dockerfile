@@ -8,5 +8,6 @@ FROM node:22
 COPY . .
 
 RUN npm install
+RUN ls /src/config
 
 CMD ["node", "src/server.js"]
