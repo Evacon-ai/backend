@@ -4,7 +4,9 @@ const { initializeApp } = require("firebase-admin/app");
 
 require('dotenv').config();
 
-const serviceAccount = (process.env.FB_SECRET && JSON.parse(process.env.FB_SECRET)) || require('./secret/serviceAccountKey.json');
+var serviceAccount 
+if(process.env.FB_SECRET) serviceAccount = JSON.parse(process.env.FB_SECRET);
+else serviceAccount = require('./secret/serviceAccountKey.json');
 
 // Initialize Firebase Admin with specific settings for better reliability
 initializeApp({
