@@ -2,11 +2,11 @@ const admin = require("firebase-admin");
 const { getFirestore } = require("firebase-admin/firestore");
 const { initializeApp } = require("firebase-admin/app");
 
-require('dotenv').config();
+require("dotenv").config();
 
-var serviceAccount 
-if(process.env.FB_SECRET) serviceAccount = JSON.parse(process.env.FB_SECRET);
-else serviceAccount = require('./secret/serviceAccountKey.json');
+var serviceAccount;
+if (process.env.FB_SECRET) serviceAccount = JSON.parse(process.env.FB_SECRET);
+else serviceAccount = require("./secret/serviceAccountKey.json");
 
 // Initialize Firebase Admin with specific settings for better reliability
 initializeApp({
@@ -15,8 +15,8 @@ initializeApp({
   firestore: {
     timestampsInSnapshots: true,
     ignoreUndefinedProperties: true,
-    preferRest: true
-  }
+    preferRest: true,
+  },
 });
 
 const db = getFirestore("evacon-db");
@@ -26,29 +26,31 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000; // 2 seconds
 
 // Helper function to delay execution
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Test the connection with retries
 async function testConnection(retries = MAX_RETRIES) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       // Use a simple query to test connection
-      await db.collection('users').limit(1).get();
-      
-      console.log('🔥 Firebase connection established successfully');
+      await db.collection("users").limit(1).get();
+
+      console.log("🔥 Firebase connection established successfully");
       return true;
-      
+
       // let r = admin.getDatabase()
       // conso
-      
     } catch (error) {
-      console.error(`❌ Firebase connection attempt ${attempt}/${retries} failed:`, error.message);
-      
+      console.error(
+        `❌ Firebase connection attempt ${attempt}/${retries} failed:`,
+        error.message
+      );
+
       if (attempt === retries) {
-        console.error('❌ Maximum connection attempts reached');
+        console.error("❌ Maximum connection attempts reached");
         return false;
       }
-      
+
       // Wait before retrying
       await delay(RETRY_DELAY);
     }
@@ -59,10 +61,11 @@ async function testConnection(retries = MAX_RETRIES) {
 // Initialize connection settings
 db.settings({
   ignoreUndefinedProperties: true,
-  timestampsInSnapshots: true
+  timestampsInSnapshots: true,
 });
 
-module.exports = { 
+module.exports = {
   db,
-  testConnection 
+  testConnection,
+  admin,
 };
