@@ -19,7 +19,6 @@ const getAllUsers = async (req, res) => {
   try {
     const usersSnapshot = await db.collection("users").get();
     const users = [];
-    console.log(usersSnapshot);
     usersSnapshot.forEach((doc) => {
       users.push({ id: doc.id, ...doc.data() });
     });
@@ -48,14 +47,15 @@ const getUserById = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const { name, email, role } = req.body;
+    const { first_name, last_name, email, role } = req.body;
 
-    if (!name || !email) {
+    if (!first_name || !last_name || !email) {
       return res.status(400).json({ error: "Name and email are required" });
     }
 
     const newUser = {
-      name,
+      first_name,
+      last_name,
       email,
       role: role || "user",
       createdAt: new Date().toISOString(),
@@ -75,7 +75,7 @@ const createUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, role } = req.body;
+    const { first_name, last_name, email, role } = req.body;
 
     const userDoc = await db.collection("users").doc(id).get();
 
@@ -84,7 +84,8 @@ const updateUser = async (req, res) => {
     }
 
     const updates = {
-      ...(name && { name }),
+      ...(first_name && { first_name }),
+      ...(last_name && { last_name }),
       ...(email && { email }),
       ...(role && { role }),
       updatedAt: new Date().toISOString(),
