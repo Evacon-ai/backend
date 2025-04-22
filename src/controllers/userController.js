@@ -50,31 +50,31 @@ const createUser = async (req, res) => {
     const { first_name, last_name, email, level, role } = req.body;
 
     if (!first_name || !last_name || !email) {
-      return res.status(400).json({ error: 'Name and email are required' });
+      return res.status(400).json({ error: "Name and email are required" });
     }
 
     const newUser = {
       first_name,
       last_name,
       email,
-      level: level || 'customer',
-      role: role || 'user',
-      created_at: new Intl.DateTimeFormat('en-US', {
-        dateStyle: 'long',
-        timeStyle: 'medium',
-        timeZone: 'America/Los_Angeles',
-        timeZoneName: 'short',
-      }).format(date);
-      created_by: req.user.uid
+      level: level || "customer",
+      role: role || "user",
+      created_at: new Intl.DateTimeFormat("en-US", {
+        dateStyle: "long",
+        timeStyle: "medium",
+        timeZone: "America/Los_Angeles",
+        timeZoneName: "short",
+      }).format(date),
+      created_by: req.user.uid,
     };
 
-    const docRef = await db.collection('users').add(newUser);
+    const docRef = await db.collection("users").add(newUser);
     const userDoc = await docRef.get();
 
     res.status(201).json({ id: userDoc.id, ...userDoc.data() });
   } catch (error) {
-    console.error('Error creating user:', error);
-    res.status(500).json({ error: 'Failed to create user' });
+    console.error("Error creating user:", error);
+    res.status(500).json({ error: "Failed to create user" });
   }
 };
 
@@ -83,10 +83,10 @@ const updateUser = async (req, res) => {
     const { id } = req.params;
     const { first_name, last_name, email, role } = req.body;
 
-    const userDoc = await db.collection('users').doc(id).get();
+    const userDoc = await db.collection("users").doc(id).get();
 
     if (!userDoc.exists) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     const updates = {
@@ -94,22 +94,22 @@ const updateUser = async (req, res) => {
       ...(last_name && { last_name }),
       ...(email && { email }),
       ...(role && { role }),
-      updated_at: new Intl.DateTimeFormat('en-US', {
-        dateStyle: 'long',
-        timeStyle: 'medium',
-        timeZone: 'America/Los_Angeles',
-        timeZoneName: 'short',
-      }).format(date);
-      updated_by: req.user.uid
+      updated_at: new Intl.DateTimeFormat("en-US", {
+        dateStyle: "long",
+        timeStyle: "medium",
+        timeZone: "America/Los_Angeles",
+        timeZoneName: "short",
+      }).format(date),
+      updated_by: req.user.uid,
     };
 
-    await db.collection('users').doc(id).update(updates);
+    await db.collection("users").doc(id).update(updates);
 
-    const updatedDoc = await db.collection('users').doc(id).get();
+    const updatedDoc = await db.collection("users").doc(id).get();
     res.json({ id: updatedDoc.id, ...updatedDoc.data() });
   } catch (error) {
-    console.error('Error updating user:', error);
-    res.status(500).json({ error: 'Failed to update user' });
+    console.error("Error updating user:", error);
+    res.status(500).json({ error: "Failed to update user" });
   }
 };
 
