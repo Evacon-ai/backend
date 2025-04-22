@@ -47,7 +47,7 @@ const getUserById = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const { first_name, last_name, email, role } = req.body;
+    const { first_name, last_name, email, level, role } = req.body;
 
     if (!first_name || !last_name || !email) {
       return res.status(400).json({ error: "Name and email are required" });
@@ -57,6 +57,7 @@ const createUser = async (req, res) => {
       first_name,
       last_name,
       email,
+      level: level || "customer",
       role: role || "user",
       createdAt: new Date().toISOString(),
       createdBy: req.user.uid,
