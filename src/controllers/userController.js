@@ -59,7 +59,12 @@ const createUser = async (req, res) => {
       email,
       level: level || "customer",
       role: role || "user",
-      createdAt: new Date().toISOString(),
+      createdAt: new Intl.DateTimeFormat('en-US', {
+        dateStyle: 'long',
+        timeStyle: 'medium',
+        timeZone: 'America/Los_Angeles',
+        timeZoneName: 'short',
+      }).format(date);
       createdBy: req.user.uid,
     };
 
