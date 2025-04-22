@@ -59,12 +59,7 @@ const createUser = async (req, res) => {
       email,
       level: level || "customer",
       role: role || "user",
-      created_at: new Intl.DateTimeFormat("en-US", {
-        dateStyle: "long",
-        timeStyle: "medium",
-        timeZone: "America/Los_Angeles",
-        timeZoneName: "short",
-      }).format(date),
+      created_at: new Date().toISOString(),
       created_by: req.user.uid,
     };
 
@@ -94,12 +89,7 @@ const updateUser = async (req, res) => {
       ...(last_name && { last_name }),
       ...(email && { email }),
       ...(role && { role }),
-      updated_at: new Intl.DateTimeFormat("en-US", {
-        dateStyle: "long",
-        timeStyle: "medium",
-        timeZone: "America/Los_Angeles",
-        timeZoneName: "short",
-      }).format(date),
+      updated_at: new Date().toISOString(),
       updated_by: req.user.uid,
     };
 
