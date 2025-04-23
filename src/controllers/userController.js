@@ -47,10 +47,12 @@ const getUserById = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const { first_name, last_name, email, level, role } = req.body;
+    const { firebase_id, first_name, last_name, email, level, role } = req.body;
 
-    if (!first_name || !last_name || !email) {
-      return res.status(400).json({ error: "Name and email are required" });
+    if (!firebase_id || !first_name || !last_name || !email) {
+      return res
+        .status(400)
+        .json({ error: "Firebase ID, name and email are required" });
     }
 
     const newUser = {
@@ -63,8 +65,8 @@ const createUser = async (req, res) => {
       created_by: req.user.uid,
     };
 
-    const docRef = await db.collection("users").add(newUser);
-    const userDoc = await docRef.get();
+    await db.collection("users").doc(firebase_id).set(newUser);
+    const userDoc = await db.collection("users").doc(firebase_id).get();
 
     res.status(201).json({ id: userDoc.id, ...userDoc.data() });
   } catch (error) {
