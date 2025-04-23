@@ -1,5 +1,7 @@
 const { db, admin } = require("../config/firebase");
 const password = require("secure-random-password");
+const axios = require("axios");
+const { FIREBASE_WEB_API_KEY } = require("../config/constants");
 
 const getCurrentUser = async (req, res) => {
   try {
@@ -74,9 +76,6 @@ const createUser = async (req, res) => {
       });
       console.log("Successfully created new user:", userRecord.uid);
 
-      // Send password reset email
-      await admin.auth().generatePasswordResetLink(email);
-
       // create Firestore user
 
       const newUser = {
@@ -89,8 +88,27 @@ const createUser = async (req, res) => {
         created_by: created_by,
       };
 
-      await db.collection("users").doc(userRecord.uid).set(newUser);
-      const userDoc = await db.collection("users").doc(userRecord.uid).get();
+      const userRef = db.collection("users").doc(userRecord.uid);
+      const doc = await userRef.get();
+      if (doc.exists) {
+        return res.status(400).json({ error: "User already exists" });
+      }
+      await userRef.set(newUser);
+      const userDoc = await userRef.get();
+
+      // Send password reset email using Firebase API
+      const response = await axios.post(
+        `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${FIREBASE_WEB_API_KEY}`,
+        {
+          requestType: "PASSWORD_RESET",
+          email: email,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       res.status(201).json({
         message:
