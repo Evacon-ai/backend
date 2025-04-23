@@ -1,4 +1,4 @@
-const { db } = require("../config/firebase");
+const { db, admin } = require("../config/firebase");
 
 const getCurrentUser = async (req, res) => {
   try {
@@ -61,7 +61,7 @@ const createUser = async (req, res) => {
       email,
       level: level || "customer",
       role: role || "user",
-      created_at: new Date().toISOString(),
+      created_at: admin.firestore.FieldValue.serverTimestamp(),
       created_by: req.user.uid,
     };
 
@@ -91,7 +91,7 @@ const updateUser = async (req, res) => {
       ...(last_name && { last_name }),
       ...(email && { email }),
       ...(role && { role }),
-      updated_at: new Date().toISOString(),
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
       updated_by: req.user.uid,
     };
 
