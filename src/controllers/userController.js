@@ -1,4 +1,5 @@
 const { db, admin } = require("../config/firebase");
+const password = require("secure-random-password");
 
 const getCurrentUser = async (req, res) => {
   try {
@@ -58,11 +59,23 @@ const createUser = async (req, res) => {
     // create Firebase user
 
     try {
+      const generatedPassword = password.randomPassword({
+        length: 12,
+        characters: [
+          password.lower,
+          password.upper,
+          password.digits,
+          password.symbols,
+        ],
+      });
       const userRecord = await admin.auth().createUser({
         email: email,
-        password: password,
+        password: generatedPassword,
       });
       console.log("Successfully created new user:", userRecord.uid);
+
+      // Send password reset email
+      await admin.auth().generatePasswordResetLink(email);
 
       // create Firestore user
 
@@ -79,7 +92,11 @@ const createUser = async (req, res) => {
       await db.collection("users").doc(userRecord.uid).set(newUser);
       const userDoc = await db.collection("users").doc(userRecord.uid).get();
 
-      res.status(201).json({ id: userDoc.id, ...userDoc.data() });
+      res.status(201).json({
+        message:
+          "User created successfully. Password reset email has been sent.",
+        user: { id: userDoc.id, ...userDoc.data() },
+      });
     } catch (error) {
       console.error("Error creating user:", error);
       res.status(500).json({ error: "Failed to create user" });

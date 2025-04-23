@@ -13,7 +13,8 @@
     "express": "^4.18.2",
     "firebase-admin": "^11.11.1",
     "helmet": "^7.1.0",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "secure-random-password": "^0.2.3"
   },
   "devDependencies": {
     "jest": "^29.7.0",
