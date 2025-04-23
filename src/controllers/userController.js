@@ -47,36 +47,43 @@ const getUserById = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const {
-      firebase_id,
-      created_by,
-      first_name,
-      last_name,
-      email,
-      level,
-      role,
-    } = req.body;
+    const { created_by, first_name, last_name, email, level, role } = req.body;
 
-    if (!firebase_id || !first_name || !last_name || !email) {
+    if (!first_name || !last_name || !email) {
       return res
         .status(400)
         .json({ error: "Firebase ID, name and email are required" });
     }
 
-    const newUser = {
-      first_name,
-      last_name,
-      email,
-      level: level || "customer",
-      role: role || "user",
-      created_at: admin.firestore.FieldValue.serverTimestamp(),
-      created_by: created_by,
-    };
+    // create Firebase user
 
-    await db.collection("users").doc(firebase_id).set(newUser);
-    const userDoc = await db.collection("users").doc(firebase_id).get();
+    try {
+      const userRecord = await admin.auth().createUser({
+        email: email,
+        password: password,
+      });
+      console.log("Successfully created new user:", userRecord.uid);
 
-    res.status(201).json({ id: userDoc.id, ...userDoc.data() });
+      // create Firestore user
+
+      const newUser = {
+        first_name,
+        last_name,
+        email,
+        level: level || "customer",
+        role: role || "user",
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        created_by: created_by,
+      };
+
+      await db.collection("users").doc(userRecord.uid).set(newUser);
+      const userDoc = await db.collection("users").doc(userRecord.uid).get();
+
+      res.status(201).json({ id: userDoc.id, ...userDoc.data() });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ error: "Failed to create user" });
+    }
   } catch (error) {
     console.error("Error creating user:", error);
     res.status(500).json({ error: "Failed to create user" });
