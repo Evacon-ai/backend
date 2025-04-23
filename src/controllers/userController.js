@@ -165,7 +165,12 @@ const deleteUser = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // Delete from Firebase Authentication first
+    await admin.auth().deleteUser(id);
+
+    // Then delete from Firestore
     await db.collection("users").doc(id).delete();
+
     res.status(204).send();
   } catch (error) {
     console.error("Error deleting user:", error);
