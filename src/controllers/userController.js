@@ -47,7 +47,15 @@ const getUserById = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const { firebase_id, first_name, last_name, email, level, role } = req.body;
+    const {
+      firebase_id,
+      created_by,
+      first_name,
+      last_name,
+      email,
+      level,
+      role,
+    } = req.body;
 
     if (!firebase_id || !first_name || !last_name || !email) {
       return res
@@ -62,7 +70,7 @@ const createUser = async (req, res) => {
       level: level || "customer",
       role: role || "user",
       created_at: admin.firestore.FieldValue.serverTimestamp(),
-      created_by: req.user.uid,
+      created_by: created_by,
     };
 
     await db.collection("users").doc(firebase_id).set(newUser);
