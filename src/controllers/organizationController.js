@@ -68,13 +68,14 @@ const updateOrganization = async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      name,
-      website,
-      time_zone,
+      account_status,
+      address,
       contact,
       logo_url,
+      name,
       notes,
-      account_status,
+      time_zone,
+      website,
     } = req.body;
 
     const orgDoc = await db.collection("organizations").doc(id).get();
@@ -84,13 +85,14 @@ const updateOrganization = async (req, res) => {
     }
 
     const updates = {
-      ...(name && { name }),
-      ...(website && { website }),
-      ...(time_zone && { time_zone }),
-      ...(contact && { contact }),
-      ...(logo_url && { logo_url }),
-      ...(notes && { notes }),
-      ...(account_status && { account_status }),
+      ...(account_status !== undefined && { account_status }),
+      ...(address !== undefined && { address }),
+      ...(contact !== undefined && { contact }),
+      ...(logo_url !== undefined && { logo_url }),
+      ...(name !== undefined && { name }),
+      ...(notes !== undefined && { notes }),
+      ...(time_zone !== undefined && { time_zone }),
+      ...(website !== undefined && { website }),
       updated_at: admin.firestore.FieldValue.serverTimestamp(),
       updated_by: req.user.uid,
     };
