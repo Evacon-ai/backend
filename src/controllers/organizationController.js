@@ -32,35 +32,42 @@ const getOrganizationById = async (req, res) => {
 
 const createOrganization = async (req, res) => {
   try {
-    const { name, website, time_zone, contact, logo_url, notes } = req.body;
+    const { name } = req.body;
 
-    if (!name || !contact?.email || !contact?.name) {
-      return res
-        .status(400)
-        .json({ error: "Organization name and contact details are required" });
+    if (!name) {
+      return res.status(400).json({ error: 'Organization name is required' });
     }
 
     const newOrg = {
-      name,
-      website: website || "",
-      time_zone: time_zone || "America/Los_Angeles",
-      contact: {
-        ...contact,
+      account_status: 'active',
+      address: {
+        city: '',
+        country: '',
+        postal_code: '',
+        state: '',
+        street: ''
       },
-      logo_url: logo_url || "",
-      notes: notes || "",
-      account_status: "active",
+      contact: {
+        email: '',
+        name: '',
+        phone: ''
+      },
+      logo_url: '',
+      name,
+      notes: '',
+      time_zone: 'America/Los_Angeles',
+      website '',
       created_at: admin.firestore.FieldValue.serverTimestamp(),
-      created_by: req.user.uid,
+      created_by: req.user.uid
     };
 
-    const docRef = await db.collection("organizations").add(newOrg);
+    const docRef = await db.collection('organizations').add(newOrg);
     const orgDoc = await docRef.get();
 
     res.status(201).json({ id: orgDoc.id, ...orgDoc.data() });
   } catch (error) {
-    console.error("Error creating organization:", error);
-    res.status(500).json({ error: "Failed to create organization" });
+    console.error('Error creating organization:', error);
+    res.status(500).json({ error: 'Failed to create organization' });
   }
 };
 
