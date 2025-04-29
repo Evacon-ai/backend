@@ -128,7 +128,7 @@ const createUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { first_name, last_name, email, role } = req.body;
+    const { first_name, last_name, email, role, organization_id } = req.body;
 
     const userDoc = await db.collection("users").doc(id).get();
 
@@ -141,6 +141,7 @@ const updateUser = async (req, res) => {
       ...(last_name && { last_name }),
       ...(email && { email }),
       ...(role && { role }),
+      ...(organization_id && { organization_id }),
       updated_at: admin.firestore.FieldValue.serverTimestamp(),
       updated_by: req.user.uid,
     };
