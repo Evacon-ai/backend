@@ -113,10 +113,166 @@ const deleteProject = async (req, res) => {
   }
 };
 
+// Diagram operations
+const getAllDiagrams = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const diagramsSnapshot = await db
+      .collection("projects")
+      .doc(projectId)
+      .collection("diagrams")
+      .get();
+
+    if (!diagramsSnapshot.empty) {
+      const diagrams = [];
+      diagramsSnapshot.forEach((doc) => {
+        diagrams.push({ id: doc.id, ...doc.data() });
+      });
+      res.json(diagrams);
+    } else {
+      res.json([]);
+    }
+  } catch (error) {
+    console.error("Error getting diagrams:", error);
+    res.status(500).json({ error: "Failed to retrieve diagrams" });
+  }
+};
+
+const getDiagramById = async (req, res) => {
+  try {
+    const { projectId, diagramId } = req.params;
+    const diagramDoc = await db
+      .collection("projects")
+      .doc(projectId)
+      .collection("diagrams")
+      .doc(diagramId)
+      .get();
+
+    if (!diagramDoc.exists) {
+      return res.status(404).json({ error: "Diagram not found" });
+    }
+
+    res.json({ id: diagramDoc.id, ...diagramDoc.data() });
+  } catch (error) {
+    console.error("Error getting diagram:", error);
+    res.status(500).json({ error: "Failed to retrieve diagram" });
+  }
+};
+
+const createDiagram = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { name, description, url, elements } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: "Diagram name is required" });
+    }
+
+    const newDiagram = {
+      name,
+      description: description || "",
+      url: url || "",
+      elements: elements || [],
+      created_at: admin.firestore.FieldValue.serverTimestamp(),
+      created_by: req.user.uid,
+    };
+
+    const docRef = await db
+      .collection("projects")
+      .doc(projectId)
+      .collection("diagrams")
+      .add(newDiagram);
+    const diagramDoc = await docRef.get();
+
+    res.status(201).json({ id: diagramDoc.id, ...diagramDoc.data() });
+  } catch (error) {
+    console.error("Error creating diagram:", error);
+    res.status(500).json({ error: "Failed to create diagram" });
+  }
+};
+
+const updateDiagram = async (req, res) => {
+  try {
+    const { projectId, diagramId } = req.params;
+    const { name, description, url, elements } = req.body;
+
+    const diagramDoc = await db
+      .collection("projects")
+      .doc(projectId)
+      .collection("diagrams")
+      .doc(diagramId)
+      .get();
+
+    if (!diagramDoc.exists) {
+      return res.status(404).json({ error: "Diagram not found" });
+    }
+
+    const updates = {
+      ...(name !== undefined && { name }),
+      ...(description !== undefined && { description }),
+      ...(url !== undefined && { url }),
+      ...(elements !== undefined && { elements }),
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_by: req.user.uid,
+    };
+
+    await db
+      .collection("projects")
+      .doc(projectId)
+      .collection("diagrams")
+      .doc(diagramId)
+      .update(updates);
+
+    const updatedDoc = await db
+      .collection("projects")
+      .doc(projectId)
+      .collection("diagrams")
+      .doc(diagramId)
+      .get();
+    res.json({ id: updatedDoc.id, ...updatedDoc.data() });
+  } catch (error) {
+    console.error("Error updating diagram:", error);
+    res.status(500).json({ error: "Failed to update diagram" });
+  }
+};
+
+const deleteDiagram = async (req, res) => {
+  try {
+    const { projectId, diagramId } = req.params;
+
+    const diagramDoc = await db
+      .collection("projects")
+      .doc(projectId)
+      .collection("diagrams")
+      .doc(diagramId)
+      .get();
+
+    if (!diagramDoc.exists) {
+      return res.status(404).json({ error: "Diagram not found" });
+    }
+
+    await db
+      .collection("projects")
+      .doc(projectId)
+      .collection("diagrams")
+      .doc(diagramId)
+      .delete();
+    res.status(204).send();
+  } catch (error) {
+    console.error("Error deleting diagram:", error);
+    res.status(500).json({ error: "Failed to delete diagram" });
+  }
+};
+
 module.exports = {
   getAllProjects,
   getProjectById,
   createProject,
   updateProject,
   deleteProject,
+  getAllDiagrams,
+  getDiagramById,
+  createDiagram,
+  updateDiagram,
+  deleteDiagram,
 };

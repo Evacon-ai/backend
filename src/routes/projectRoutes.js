@@ -13,4 +13,14 @@ router.post("/", projectController.createProject);
 router.put("/:id", projectController.updateProject);
 router.delete("/:id", projectController.deleteProject);
 
+// Diagram routes
+router.get("/:projectId/diagrams", projectController.getAllDiagrams);
+router.get("/:projectId/diagrams/:diagramId", projectController.getDiagramById);
+router.post("/:projectId/diagrams", projectController.createDiagram);
+router.put("/:projectId/diagrams/:diagramId", projectController.updateDiagram);
+router.delete(
+  "/:projectId/diagrams/:diagramId",
+  projectController.deleteDiagram
+);
+
 module.exports = router;
