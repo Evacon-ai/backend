@@ -32,9 +32,11 @@ async function generatePdfPreview(storagePath) {
 
   try {
     const page = await browser.newPage();
-    const viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(
+    const viewerHost = process.env.VIEWER_BASE_URL || "http://localhost:8080";
+    const viewerUrl = `${viewerHost}/pdf-viewer/viewer.html?file=${encodeURIComponent(
       pdfUrl
     )}`;
+
     console.log("Opening PDF:", viewerUrl);
 
     await page.goto(viewerUrl, { waitUntil: "networkidle2" });

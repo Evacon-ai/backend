@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
@@ -18,6 +19,10 @@ app.use(cors()); // Enable CORS
 app.use(morgan("dev")); // Request logging
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(
+  "/pdf-viewer",
+  express.static(path.join(__dirname, "../public/pdf-viewer/web"))
+);
 
 // Health check endpoint with detailed status
 app.get("/health", async (req, res) => {
