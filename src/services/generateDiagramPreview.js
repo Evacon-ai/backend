@@ -32,9 +32,12 @@ async function generatePdfPreview(storagePath) {
 
   try {
     const page = await browser.newPage();
-    const viewerHost = process.env.VIEWER_BASE_URL || "http://localhost:8080";
-    const viewerUrl = `${viewerHost}/pdf-viewer/viewer.html?file=${encodeURIComponent(
+    const viewerBaseUrl = process.env.VIEWER_BASE_URL;
+    const proxiedPdfUrl = `${viewerBaseUrl}/pdf-proxy?url=${encodeURIComponent(
       pdfUrl
+    )}`;
+    const viewerUrl = `${viewerBaseUrl}/pdf-viewer/viewer.html?file=${encodeURIComponent(
+      proxiedPdfUrl
     )}`;
 
     console.log("Opening PDF:", viewerUrl);

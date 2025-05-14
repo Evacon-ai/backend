@@ -58,6 +58,43 @@ app.use((err, req, res, next) => {
   });
 });
 
+// PDF proxy endpoint
+// This endpoint fetches a PDF from a given URL and streams it to the client
+// It sets the appropriate headers for PDF content and caching
+// It also handles errors and logs them to the console
+// This is useful for serving PDFs from external sources without exposing the URL directly
+
+const fetch = require("node-fetch");
+
+app.get("/pdf-proxy", async (req, res) => {
+  const fileUrl = req.query.url;
+  if (!fileUrl) return res.status(400).send("Missing URL");
+
+  try {
+    const response = await fetch(fileUrl);
+    console.log("[PDF Proxy] Fetching:", fileUrl);
+    console.log("[PDF Proxy] Status:", response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[PDF Proxy] Upstream response body:", errorText);
+      return res
+        .status(response.status)
+        .send(`Upstream error (${response.status})`);
+    }
+
+    res.set({
+      "Content-Type": response.headers.get("content-type") || "application/pdf",
+      "Cache-Control": "private, max-age=300",
+    });
+
+    response.body.pipe(res);
+  } catch (err) {
+    console.error("PDF proxy failed:", err);
+    res.status(500).send("Failed to fetch PDF");
+  }
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: "Not Found" });
