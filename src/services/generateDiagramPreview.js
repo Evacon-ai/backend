@@ -20,47 +20,65 @@ async function generateDiagramPreview(storagePath) {
 }
 
 async function generatePdfPreview(storagePath) {
+  console.log(`[PREVIEW] Generating preview for: ${storagePath}`);
+
   const [pdfUrl] = await bucket.file(storagePath).getSignedUrl({
     action: "read",
     expires: Date.now() + 15 * 60 * 1000,
   });
+
+  const viewerBaseUrl = process.env.VIEWER_BASE_URL;
+  if (!viewerBaseUrl) throw new Error("Missing VIEWER_BASE_URL");
+
+  const proxiedPdfUrl = `${viewerBaseUrl}/pdf-proxy?url=${encodeURIComponent(
+    pdfUrl
+  )}`;
+  const viewerUrl = `${viewerBaseUrl}/pdf-viewer/viewer.html?file=${encodeURIComponent(
+    proxiedPdfUrl
+  )}`;
+  console.log(`[PREVIEW] Using viewer URL: ${viewerUrl}`);
 
   const browser = await puppeteer.launch({
     headless: "new",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
+  const page = await browser.newPage();
+
+  // Pipe viewer console logs into Node logs
+  page.on("console", (msg) => console.log(`[VIEWER LOG] ${msg.text()}`));
+  page.on("pageerror", (err) => console.error(`[VIEWER ERROR] ${err}`));
+
   try {
-    const page = await browser.newPage();
-    const viewerBaseUrl = process.env.VIEWER_BASE_URL;
-    const proxiedPdfUrl = `${viewerBaseUrl}/pdf-proxy?url=${encodeURIComponent(
-      pdfUrl
-    )}`;
-    const viewerUrl = `${viewerBaseUrl}/pdf-viewer/viewer.html?file=${encodeURIComponent(
-      proxiedPdfUrl
-    )}`;
-
-    console.log("Opening PDF:", viewerUrl);
-
     await page.goto(viewerUrl, { waitUntil: "networkidle2" });
-    await page.waitForSelector("#viewerContainer");
-
-    // Optional: wait for rendering to start
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
-    // 🖼️ Take a screenshot before waiting for canvas
-    const screenshotBuffer = await page.screenshot({ fullPage: true });
-    const debugPath = `debug/viewer_debug_${Date.now()}.png`;
-    const debugUrl = await uploadToFirebase(screenshotBuffer, debugPath);
-    console.log("[DEBUG] Screenshot uploaded to:", debugUrl);
-
-    await page.waitForSelector('.page[data-page-number="1"] canvas', {
-      timeout: 90000,
+    await page.waitForSelector("#viewer .page canvas", {
+      timeout: 60000,
       visible: true,
     });
+    console.log("[PREVIEW] Canvas element found.");
 
-    const canvas = await page.$(".page[data-page-number='1'] canvas");
-    const previewBuffer = await canvas.screenshot();
+    const canvasHandle = await page.$("#viewer .page canvas");
+
+    console.log("[PREVIEW] Waiting for canvas to be rendered...");
+    await page.evaluate(async (canvas) => {
+      const ctx = canvas.getContext("2d");
+      let attempts = 0;
+      let hasContent = false;
+
+      while (attempts < 30 && !hasContent) {
+        await new Promise((r) => setTimeout(r, 500));
+        const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        hasContent = pixels.some((v, i) => i % 4 !== 3 && v > 0);
+        attempts++;
+      }
+
+      if (!hasContent) {
+        throw new Error("Timeout: Canvas was not rendered with PDF content.");
+      }
+    }, canvasHandle);
+
+    console.log("[PREVIEW] Canvas rendering confirmed. Taking screenshot...");
+    const previewBuffer = await canvasHandle.screenshot();
 
     const thumbBuffer = await sharp(previewBuffer)
       .resize({ width: 300 })
@@ -75,9 +93,14 @@ async function generatePdfPreview(storagePath) {
       uploadToFirebase(thumbBuffer, thumbPath),
     ]);
 
+    console.log("[PREVIEW] Thumbnail and preview uploaded successfully.");
     return { previewUrl, thumbnailUrl };
+  } catch (error) {
+    console.error(`[PREVIEW ERROR] ${error.message}`);
+    throw error;
   } finally {
     await browser.close();
+    console.log("[PREVIEW] Browser closed.");
   }
 }
 
