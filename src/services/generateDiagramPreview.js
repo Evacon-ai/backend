@@ -25,7 +25,10 @@ async function generatePdfPreview(storagePath) {
     expires: Date.now() + 15 * 60 * 1000,
   });
 
-  const browser = await puppeteer.launch({ headless: "new" });
+  const browser = await puppeteer.launch({
+    headless: "new",
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
   const page = await browser.newPage();
   const viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(
     pdfUrl
