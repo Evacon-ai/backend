@@ -46,7 +46,7 @@ async function generatePdfPreview(storagePath) {
     await page.waitForSelector("#viewerContainer");
 
     // Optional: wait for rendering to start
-    await page.waitForTimeout(3000);
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     // 🖼️ Take a screenshot before waiting for canvas
     const screenshotBuffer = await page.screenshot({ fullPage: true });
