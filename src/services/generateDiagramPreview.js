@@ -33,6 +33,9 @@ async function generatePdfPreview(storagePath) {
   const proxiedPdfUrl = `${viewerBaseUrl}/pdf-proxy?url=${encodeURIComponent(
     pdfUrl
   )}`;
+
+  console.log("[DEBUG] proxiedPdfUrl:", proxiedPdfUrl);
+
   const viewerUrl = `${viewerBaseUrl}/pdf-viewer/viewer.html?file=${proxiedPdfUrl}`;
   console.log(`[PREVIEW] Using viewer URL: ${viewerUrl}`);
 
