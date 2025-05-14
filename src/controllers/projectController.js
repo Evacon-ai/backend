@@ -181,7 +181,6 @@ const createDiagram = async (req, res) => {
       previewUrl: "",
       thumbnailUrl: "",
       error: "",
-      error_meta: "",
       created_at: admin.firestore.FieldValue.serverTimestamp(),
       created_by: req.user.uid,
     };
@@ -201,11 +200,11 @@ const createDiagram = async (req, res) => {
           newDiagram.thumbnailUrl = thumbnailUrl;
         } catch (err) {
           console.warn("Preview generation failed:", err.message);
+          newDiagram.error = "Preview generation failed: " + err.message;
         }
       } else {
         newDiagram.error =
           "Could not extract storage path from URL, skipping preview generation.";
-        newDiagram.error_meta = ext;
         console.warn(
           "Could not extract storage path from URL, skipping preview generation."
         );
