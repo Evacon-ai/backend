@@ -314,7 +314,10 @@ const getDiagramDataExtract = async (req, res) => {
       res.json({ id: updatedDoc.id, ...updatedDoc.data() });
     } catch (error) {
       console.error("Error processing diagram with AI:", error);
-      res.status(500).json({ error: "Failed to process diagram with AI" });
+      res.status(500).json({
+        error_message: "Failed to process diagram with AI",
+        error,
+      });
     }
   } catch (error) {
     console.error("Error getting diagram:", error);
