@@ -30,9 +30,7 @@ async function generatePdfPreview(storagePath) {
   const viewerBaseUrl = process.env.VIEWER_BASE_URL;
   if (!viewerBaseUrl) throw new Error("Missing VIEWER_BASE_URL");
 
-  const proxiedPdfUrl = `${viewerBaseUrl}/pdf-proxy?url=${encodeURIComponent(
-    pdfUrl
-  )}`;
+  const proxiedPdfUrl = `${viewerBaseUrl}/pdf-proxy?url=${pdfUrl}`;
 
   console.log("[DEBUG] proxiedPdfUrl:", proxiedPdfUrl);
 
