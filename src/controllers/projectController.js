@@ -178,6 +178,10 @@ const createDiagram = async (req, res) => {
       description: description || "",
       url: url || "",
       elements: elements || [],
+      previewUrl: "",
+      thumbnailUrl: "",
+      error: "",
+      error_meta: "",
       created_at: admin.firestore.FieldValue.serverTimestamp(),
       created_by: req.user.uid,
     };
