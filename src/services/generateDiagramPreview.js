@@ -29,31 +29,64 @@ async function generatePdfPreview(storagePath) {
     headless: "new",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
-  const page = await browser.newPage();
-  const viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(
-    pdfUrl
-  )}`;
-  await page.goto(viewerUrl, { waitUntil: "networkidle2" });
-  await page.waitForSelector('.page[data-page-number="1"] canvas');
 
-  const canvas = await page.$('.page[data-page-number="1"] canvas');
-  const previewBuffer = await canvas.screenshot();
-  await browser.close();
+  try {
+    const page = await browser.newPage();
+    const viewerUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(
+      pdfUrl
+    )}`;
+    console.log("Opening PDF:", viewerUrl);
 
-  const thumbBuffer = await sharp(previewBuffer)
+    await page.goto(viewerUrl, { waitUntil: "networkidle2" });
+    await page.waitForSelector("#viewerContainer");
+    await page.waitForSelector(".page[data-page-number='1'] canvas", {
+      timeout: 60000,
+    });
+
+    const canvas = await page.$(".page[data-page-number='1'] canvas");
+    const previewBuffer = await canvas.screenshot();
+
+    const thumbBuffer = await sharp(previewBuffer)
+      .resize({ width: 300 })
+      .toBuffer();
+
+    const dir = path.dirname(storagePath);
+    const previewPath = `${dir}/preview.png`;
+    const thumbPath = `${dir}/thumb.png`;
+
+    const [previewUrl, thumbnailUrl] = await Promise.all([
+      uploadToFirebase(previewBuffer, previewPath),
+      uploadToFirebase(thumbBuffer, thumbPath),
+    ]);
+
+    return { previewUrl, thumbnailUrl };
+  } finally {
+    await browser.close();
+  }
+}
+
+async function generateImageThumbnail(storagePath) {
+  const [downloadUrl] = await bucket.file(storagePath).getSignedUrl({
+    action: "read",
+    expires: Date.now() + 15 * 60 * 1000,
+  });
+
+  const response = await fetch(downloadUrl);
+  const imageBuffer = Buffer.from(await response.arrayBuffer());
+
+  const thumbBuffer = await sharp(imageBuffer)
     .resize({ width: 300 })
     .toBuffer();
 
   const dir = path.dirname(storagePath);
-  const previewPath = `${dir}/preview.png`;
   const thumbPath = `${dir}/thumb.png`;
 
-  const [previewUrl, thumbnailUrl] = await Promise.all([
-    uploadToFirebase(previewBuffer, previewPath),
-    uploadToFirebase(thumbBuffer, thumbPath),
-  ]);
+  const thumbnailUrl = await uploadToFirebase(thumbBuffer, thumbPath);
 
-  return { previewUrl, thumbnailUrl };
+  return {
+    previewUrl: downloadUrl, // original image stays as-is
+    thumbnailUrl,
+  };
 }
 
 async function generateImageThumbnail(storagePath) {
