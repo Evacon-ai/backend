@@ -178,45 +178,9 @@ const createDiagram = async (req, res) => {
       description: description || "",
       url: url || "",
       elements: elements || [],
-      previewUrl: "",
-      thumbnailUrl: "",
-      error: "",
       created_at: admin.firestore.FieldValue.serverTimestamp(),
       created_by: req.user.uid,
     };
-
-    const supportedExtensions = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
-    newDiagram.error = url;
-    if (url) {
-      const decodedUrl = decodeURIComponent(url);
-      const match = decodedUrl.match(/\/o\/([^?]+)\?/);
-
-      if (match && match[1]) {
-        const storagePath = match[1];
-        const fileExt = path.extname(storagePath).toLowerCase();
-
-        if (supportedExtensions.includes(fileExt)) {
-          try {
-            const { previewUrl, thumbnailUrl } = await generateDiagramPreview(
-              storagePath
-            );
-            newDiagram.previewUrl = previewUrl;
-            newDiagram.thumbnailUrl = thumbnailUrl;
-            newDiagram.error = "Preview successfully generated";
-          } catch (err) {
-            console.warn("Preview generation failed:", err.message);
-            newDiagram.error = `Preview generation failed: ${err.message}`;
-          }
-        } else {
-          newDiagram.error = `Unsupported file extension: ${fileExt}`;
-        }
-      } else {
-        newDiagram.error = "Could not extract storage path from URL.";
-        console.warn(newDiagram.error);
-      }
-    } else {
-      // newDiagram.error = "No URL provided.";
-    }
 
     const docRef = await db
       .collection("projects")
@@ -256,6 +220,44 @@ const updateDiagram = async (req, res) => {
       updated_at: admin.firestore.FieldValue.serverTimestamp(),
       updated_by: req.user.uid,
     };
+
+    // if diagram's URL has changed, regenerate preview
+    if (url) {
+      if (url !== diagramDoc.data().url) {
+        const supportedExtensions = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
+        const decodedUrl = decodeURIComponent(url);
+        const match = decodedUrl.match(/\/o\/([^?]+)\?/);
+
+        if (match && match[1]) {
+          const storagePath = match[1];
+          const fileExt = path.extname(storagePath).toLowerCase();
+
+          if (supportedExtensions.includes(fileExt)) {
+            try {
+              const { previewUrl, thumbnailUrl } = await generateDiagramPreview(
+                storagePath
+              );
+              updates.previewUrl = previewUrl;
+              updates.thumbnailUrl = thumbnailUrl;
+              updates.error = "Preview successfully generated";
+            } catch (err) {
+              console.warn("Preview generation failed:", err.message);
+              updates.error = `Preview generation failed: ${err.message}`;
+            }
+          } else {
+            updates.error = `Unsupported file extension: ${fileExt}`;
+          }
+        } else {
+          updates.error = "Could not extract storage path from URL.";
+          console.warn(updates.error);
+        }
+      } else {
+        updates.error =
+          "URL hasn't change, regenerating preview is not needed.";
+      }
+    } else {
+      updates.error = "No URL provided.";
+    }
 
     await db
       .collection("projects")
