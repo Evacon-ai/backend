@@ -190,6 +190,7 @@ const createDiagram = async (req, res) => {
 
     if (url && supported.includes(ext)) {
       const match = decodeURIComponent(url).match(/\/o\/([^?]+)\?/);
+      newDiagram.error = match;
       if (match && match[1]) {
         const storagePath = match[1];
         try {
