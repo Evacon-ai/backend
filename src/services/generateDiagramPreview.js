@@ -49,8 +49,10 @@ async function generatePdfPreview(storagePath) {
     await page.waitForTimeout(3000);
 
     // 🖼️ Take a screenshot before waiting for canvas
-    await page.screenshot({ path: "/tmp/viewer_debug.png", fullPage: true });
-    console.log("[DEBUG] Screenshot saved at /tmp/viewer_debug.png");
+    const screenshotBuffer = await page.screenshot({ fullPage: true });
+    const debugPath = `debug/viewer_debug_${Date.now()}.png`;
+    const debugUrl = await uploadToFirebase(screenshotBuffer, debugPath);
+    console.log("[DEBUG] Screenshot uploaded to:", debugUrl);
 
     await page.waitForSelector('.page[data-page-number="1"] canvas', {
       timeout: 90000,
