@@ -1,6 +1,8 @@
 const { db, admin } = require("../config/firebase");
 const { extractElementsFromDiagram } = require("../services/diagramExtractor");
-const { generateDiagramPreview } = require("../services/generatePdfPreview");
+const {
+  generateDiagramPreview,
+} = require("../services/generateDiagramPreview");
 const path = require("path");
 
 const getAllProjects = async (req, res) => {
