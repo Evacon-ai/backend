@@ -1,6 +1,6 @@
 const puppeteer = require("puppeteer");
 const sharp = require("sharp");
-const { bucket } = require("../firebase");
+const { bucket } = require("../config/firebase");
 const { v4: uuidv4 } = require("uuid");
 const path = require("path");
 
