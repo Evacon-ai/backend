@@ -287,7 +287,7 @@ const getDiagramDataExtract = async (req, res) => {
         return res.status(400).json({ error: "Missing diagram URL" });
       }
 
-      const response = []; //await extractElementsFromDiagram(diagramData.url);
+      const response = await extractElementsFromDiagram(diagramData.url);
       const elements = response || [];
 
       // Save received extracted data in DB
@@ -317,6 +317,7 @@ const getDiagramDataExtract = async (req, res) => {
       res.status(500).json({
         error_message: "Failed to process diagram with AI",
         error,
+        url: diagramData.url,
       });
     }
   } catch (error) {
