@@ -185,31 +185,37 @@ const createDiagram = async (req, res) => {
       created_by: req.user.uid,
     };
 
-    const ext = path.extname(url).toLowerCase();
-    const supported = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
-    newDiagram.error = supported.includes(ext);
-    if (url && supported.includes(ext)) {
-      const match = decodeURIComponent(url).match(/\/o\/([^?]+)\?/);
+    const supportedExtensions = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
+
+    if (url) {
+      const decodedUrl = decodeURIComponent(url);
+      const match = decodedUrl.match(/\/o\/([^?]+)\?/);
+
       if (match && match[1]) {
         const storagePath = match[1];
-        try {
-          const { previewUrl, thumbnailUrl } = await generateDiagramPreview(
-            storagePath
-          );
-          newDiagram.previewUrl = previewUrl;
-          newDiagram.thumbnailUrl = thumbnailUrl;
-          newDiagram.error = "Reached successful generation of preview";
-        } catch (err) {
-          console.warn("Preview generation failed:", err.message);
-          newDiagram.error = "Preview generation failed: " + err.message;
+        const fileExt = path.extname(storagePath).toLowerCase();
+
+        if (supportedExtensions.includes(fileExt)) {
+          try {
+            const { previewUrl, thumbnailUrl } = await generateDiagramPreview(
+              storagePath
+            );
+            newDiagram.previewUrl = previewUrl;
+            newDiagram.thumbnailUrl = thumbnailUrl;
+            newDiagram.error = "Preview successfully generated";
+          } catch (err) {
+            console.warn("Preview generation failed:", err.message);
+            newDiagram.error = `Preview generation failed: ${err.message}`;
+          }
+        } else {
+          newDiagram.error = `Unsupported file extension: ${fileExt}`;
         }
       } else {
-        newDiagram.error =
-          "Could not extract storage path from URL, skipping preview generation.";
-        console.warn(
-          "Could not extract storage path from URL, skipping preview generation."
-        );
+        newDiagram.error = "Could not extract storage path from URL.";
+        console.warn(newDiagram.error);
       }
+    } else {
+      newDiagram.error = "No URL provided.";
     }
 
     const docRef = await db
