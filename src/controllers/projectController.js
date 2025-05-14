@@ -1,4 +1,5 @@
 const { db, admin } = require("../config/firebase");
+const { extractElementsFromDiagram } = require("../services/diagramExtractor");
 
 const getAllProjects = async (req, res) => {
   try {
@@ -277,55 +278,44 @@ const getDiagramDataExtract = async (req, res) => {
     if (!diagramDoc.exists) {
       return res.status(404).json({ error: "Diagram not found" });
     }
-    // POST diagram URL to AI API
+    const diagramData = diagramDoc.data();
 
-    const elements = [
-      {
-        identifier_text: "P-210-001/6",
-        element_desc: "unknown element in loop 210, with a unique ID of 001/6",
-        contains_text: true,
-        type_category: "Instrument",
-        type: "unknown",
-      },
-      {
-        identifier_text: "AE-510-004",
-        element_desc: "element in loop 510, with a unique ID of 004",
-        contains_text: true,
-        type_category: "Instrument",
-        type: "unknown",
-      },
-      {
-        identifier_text: "AJT-510-004",
-        element_desc:
-          "Temperature transmitter in loop 510, with a unique ID of 004",
-        contains_text: true,
-        type_category: "Instrument",
-        type: "temperature transmitter",
-      },
-    ];
+    try {
+      // Make request to AI API
 
-    // Save received extracted data in DB
-    const updates = {
-      ...(elements !== undefined && { elements }),
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
-      updated_by: req.user.uid,
-    };
+      if (!diagramData?.url) {
+        return res.status(400).json({ error: "Missing diagram URL" });
+      }
 
-    await db
-      .collection("projects")
-      .doc(projectId)
-      .collection("diagrams")
-      .doc(diagramId)
-      .update(updates);
-    const updatedDoc = await db
-      .collection("projects")
-      .doc(projectId)
-      .collection("diagrams")
-      .doc(diagramId)
-      .get();
+      const response = await extractElementsFromDiagram(diagramData.url);
+      const elements = response || [];
 
-    // Send responce back (full diagram object)
-    res.json({ id: updatedDoc.id, ...updatedDoc.data() });
+      // Save received extracted data in DB
+      const updates = {
+        ...(elements !== undefined && { elements }),
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        updated_by: req.user.uid,
+      };
+
+      await db
+        .collection("projects")
+        .doc(projectId)
+        .collection("diagrams")
+        .doc(diagramId)
+        .update(updates);
+      const updatedDoc = await db
+        .collection("projects")
+        .doc(projectId)
+        .collection("diagrams")
+        .doc(diagramId)
+        .get();
+
+      // Send responce back (full diagram object)
+      res.json({ id: updatedDoc.id, ...updatedDoc.data() });
+    } catch (error) {
+      console.error("Error processing diagram with AI:", error);
+      res.status(500).json({ error: "Failed to process diagram with AI" });
+    }
   } catch (error) {
     console.error("Error getting diagram:", error);
     res.status(500).json({ error: "Failed to retrieve diagram" });
