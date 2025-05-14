@@ -199,6 +199,9 @@ const createDiagram = async (req, res) => {
           console.warn("Preview generation failed:", err.message);
         }
       } else {
+        newDiagram.error =
+          "Could not extract storage path from URL, skipping preview generation.";
+        newDiagram.error_meta = ext;
         console.warn(
           "Could not extract storage path from URL, skipping preview generation."
         );
