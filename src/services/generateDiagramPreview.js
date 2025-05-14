@@ -44,8 +44,17 @@ async function generatePdfPreview(storagePath) {
 
     await page.goto(viewerUrl, { waitUntil: "networkidle2" });
     await page.waitForSelector("#viewerContainer");
-    await page.waitForSelector(".page[data-page-number='1'] canvas", {
-      timeout: 60000,
+
+    // Optional: wait for rendering to start
+    await page.waitForTimeout(3000);
+
+    // 🖼️ Take a screenshot before waiting for canvas
+    await page.screenshot({ path: "/tmp/viewer_debug.png", fullPage: true });
+    console.log("[DEBUG] Screenshot saved at /tmp/viewer_debug.png");
+
+    await page.waitForSelector('.page[data-page-number="1"] canvas', {
+      timeout: 90000,
+      visible: true,
     });
 
     const canvas = await page.$(".page[data-page-number='1'] canvas");
