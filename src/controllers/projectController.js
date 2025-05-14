@@ -1,5 +1,7 @@
 const { db, admin } = require("../config/firebase");
 const { extractElementsFromDiagram } = require("../services/diagramExtractor");
+const { generateDiagramPreview } = require("../services/generatePdfPreview");
+const path = require("path");
 
 const getAllProjects = async (req, res) => {
   try {
@@ -177,6 +179,29 @@ const createDiagram = async (req, res) => {
       created_at: admin.firestore.FieldValue.serverTimestamp(),
       created_by: req.user.uid,
     };
+
+    const ext = path.extname(url).toLowerCase();
+    const supported = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
+
+    if (url && supported.includes(ext)) {
+      const match = decodeURIComponent(url).match(/\/o\/([^?]+)\?/);
+      if (match && match[1]) {
+        const storagePath = match[1];
+        try {
+          const { previewUrl, thumbnailUrl } = await generateDiagramPreview(
+            storagePath
+          );
+          newDiagram.previewUrl = previewUrl;
+          newDiagram.thumbnailUrl = thumbnailUrl;
+        } catch (err) {
+          console.warn("Preview generation failed:", err.message);
+        }
+      } else {
+        console.warn(
+          "Could not extract storage path from URL, skipping preview generation."
+        );
+      }
+    }
 
     const docRef = await db
       .collection("projects")

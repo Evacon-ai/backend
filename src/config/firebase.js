@@ -17,9 +17,11 @@ initializeApp({
     ignoreUndefinedProperties: true,
     preferRest: true,
   },
+  storageBucket: "evacon-ai-565c5.firebasestorage.app",
 });
 
 const db = getFirestore("evacon-db");
+const bucket = admin.storage().bucket();
 
 // Maximum number of connection attempts
 const MAX_RETRIES = 3;
@@ -34,12 +36,8 @@ async function testConnection(retries = MAX_RETRIES) {
     try {
       // Use a simple query to test connection
       await db.collection("users").limit(1).get();
-
       console.log("🔥 Firebase connection established successfully");
       return true;
-
-      // let r = admin.getDatabase()
-      // conso
     } catch (error) {
       console.error(
         `❌ Firebase connection attempt ${attempt}/${retries} failed:`,
@@ -65,7 +63,8 @@ db.settings({
 });
 
 module.exports = {
-  db,
-  testConnection,
   admin,
+  db,
+  bucket,
+  testConnection,
 };
