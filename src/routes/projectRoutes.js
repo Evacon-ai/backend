@@ -24,7 +24,7 @@ router.delete(
 );
 
 router.get(
-  "/:projectId/diagrams/:diagramId",
+  "/:projectId/diagrams/:diagramId/extract",
   projectController.getDiagramDataExtract
 );
 
