@@ -198,6 +198,7 @@ const createDiagram = async (req, res) => {
           );
           newDiagram.previewUrl = previewUrl;
           newDiagram.thumbnailUrl = thumbnailUrl;
+          newDiagram.error = "Reached successful generation of preview";
         } catch (err) {
           console.warn("Preview generation failed:", err.message);
           newDiagram.error = "Preview generation failed: " + err.message;
