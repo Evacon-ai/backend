@@ -186,7 +186,7 @@ const createDiagram = async (req, res) => {
     };
 
     const supportedExtensions = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
-
+    newDiagram.error = url;
     if (url) {
       const decodedUrl = decodeURIComponent(url);
       const match = decodedUrl.match(/\/o\/([^?]+)\?/);
@@ -215,7 +215,7 @@ const createDiagram = async (req, res) => {
         console.warn(newDiagram.error);
       }
     } else {
-      newDiagram.error = "No URL provided.";
+      // newDiagram.error = "No URL provided.";
     }
 
     const docRef = await db
