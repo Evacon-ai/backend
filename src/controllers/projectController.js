@@ -187,10 +187,9 @@ const createDiagram = async (req, res) => {
 
     const ext = path.extname(url).toLowerCase();
     const supported = [".pdf", ".png", ".jpg", ".jpeg", ".webp"];
-
+    newDiagram.error = supported.includes(ext);
     if (url && supported.includes(ext)) {
       const match = decodeURIComponent(url).match(/\/o\/([^?]+)\?/);
-      newDiagram.error = match;
       if (match && match[1]) {
         const storagePath = match[1];
         try {
