@@ -264,6 +264,74 @@ const deleteDiagram = async (req, res) => {
   }
 };
 
+const getDiagramDataExtract = async (req, res) => {
+  try {
+    const { projectId, diagramId } = req.params;
+    const diagramDoc = await db
+      .collection("projects")
+      .doc(projectId)
+      .collection("diagrams")
+      .doc(diagramId)
+      .get();
+
+    if (!diagramDoc.exists) {
+      return res.status(404).json({ error: "Diagram not found" });
+    }
+    // POST diagram URL to AI API
+
+    const elements = [
+      {
+        identifier_text: "P-210-001/6",
+        element_desc: "unknown element in loop 210, with a unique ID of 001/6",
+        contains_text: true,
+        type_category: "Instrument",
+        type: "unknown",
+      },
+      {
+        identifier_text: "AE-510-004",
+        element_desc: "element in loop 510, with a unique ID of 004",
+        contains_text: true,
+        type_category: "Instrument",
+        type: "unknown",
+      },
+      {
+        identifier_text: "AJT-510-004",
+        element_desc:
+          "Temperature transmitter in loop 510, with a unique ID of 004",
+        contains_text: true,
+        type_category: "Instrument",
+        type: "temperature transmitter",
+      },
+    ];
+
+    // Save received extracted data in DB
+    const updates = {
+      ...(elements !== undefined && { elements }),
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_by: req.user.uid,
+    };
+
+    await db
+      .collection("projects")
+      .doc(projectId)
+      .collection("diagrams")
+      .doc(diagramId)
+      .update(updates);
+    const updatedDoc = await db
+      .collection("projects")
+      .doc(projectId)
+      .collection("diagrams")
+      .doc(diagramId)
+      .get();
+
+    // Send responce back (full diagram object)
+    res.json({ id: updatedDoc.id, ...updatedDoc.data() });
+  } catch (error) {
+    console.error("Error getting diagram:", error);
+    res.status(500).json({ error: "Failed to retrieve diagram" });
+  }
+};
+
 module.exports = {
   getAllProjects,
   getProjectById,
@@ -275,4 +343,5 @@ module.exports = {
   createDiagram,
   updateDiagram,
   deleteDiagram,
+  getDiagramDataExtract,
 };
