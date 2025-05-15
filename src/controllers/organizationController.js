@@ -35,25 +35,26 @@ const getOrganizationProjects = async (req, res) => {
     const { id } = req.params;
 
     // First check if organization exists
-    const orgDoc = await db.collection('organizations').doc(id).get();
+    const orgDoc = await db.collection("organizations").doc(id).get();
     if (!orgDoc.exists) {
-      return res.status(404).json({ error: 'Organization not found' });
+      return res.status(404).json({ error: "Organization not found" });
     }
 
     // Get all projects for this organization
-    const projectsSnapshot = await db.collection('projects')
-      .where('organization_id', '==', id)
+    const projectsSnapshot = await db
+      .collection("projects")
+      .where("organization_id", "==", id)
       .get();
 
     const projects = [];
-    projectsSnapshot.forEach(doc => {
+    projectsSnapshot.forEach((doc) => {
       projects.push({ id: doc.id, ...doc.data() });
     });
 
     res.json(projects);
   } catch (error) {
-    console.error('Error getting organization projects:', error);
-    res.status(500).json({ error: 'Failed to retrieve organization projects' });
+    console.error("Error getting organization projects:", error);
+    res.status(500).json({ error: "Failed to retrieve organization projects" });
   }
 };
 
@@ -162,7 +163,7 @@ const deleteOrganization = async (req, res) => {
 module.exports = {
   getAllOrganizations,
   getOrganizationById,
-  getOrganizationProjects
+  getOrganizationProjects,
   createOrganization,
   updateOrganization,
   deleteOrganization,
