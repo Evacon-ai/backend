@@ -54,7 +54,7 @@ async function generatePdfPreview(storagePath) {
     await new Promise((r) => setTimeout(r, 3000));
 
     console.log("[DEBUG] Taking initial debug screenshot...");
-    await page.screenshot({ path: "/tmp/viewer_debug.png" }); // no fullPage
+    // await page.screenshot({ path: "/tmp/viewer_debug.png" }); // no fullPage
 
     const canvasCount = await page.$$eval("canvas", (els) => els.length);
     console.log(`[DEBUG] Found ${canvasCount} canvas elements`);
