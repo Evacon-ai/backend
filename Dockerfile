@@ -40,10 +40,7 @@ COPY . .
 RUN npm install
 
 # Tell Puppeteer not to install its own Chromium (we use system one)
-ENV PUPPETEER_SKIP_DOWNLOAD=true
-
-# Use the bundled Chromium that Puppeteer installed
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+ENV PUPPETEER_SKIP_DOWNLOAD=false
 
 # Set environment variables for Puppeteer stability
 ENV PORT=8080
