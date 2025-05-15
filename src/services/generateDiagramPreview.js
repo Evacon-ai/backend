@@ -39,12 +39,14 @@ async function generatePdfPreview(storagePath) {
   const viewerUrl = `${viewerBaseUrl}/pdf-viewer/web/viewer.html?file=${encodedProxyUrl}`;
   console.log(`[DEBUG] viewerUrl: ${viewerUrl}`);
 
+  console.log("[PREVIEW] Launching browser");
   const browser = await puppeteer.launch({
     headless: "new",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
   const page = await browser.newPage();
+  console.log("[PREVIEW] Going to viewer:", viewerUrl);
 
   // Pipe viewer console logs into Node logs
   page.on("console", (msg) => console.log(`[VIEWER LOG] ${msg.text()}`));
@@ -52,6 +54,18 @@ async function generatePdfPreview(storagePath) {
 
   try {
     await page.goto(viewerUrl, { waitUntil: "networkidle2" });
+
+    console.log("[DEBUG] Taking screenshot before canvas wait...");
+    await page.screenshot({ path: "/tmp/viewer_debug.png", fullPage: true });
+
+    console.log("[DEBUG] Counting canvases...");
+    const count = await page.$$eval("canvas", (els) => els.length);
+    console.log(`[DEBUG] Found ${count} canvas elements`);
+
+    if (count === 0) {
+      throw new Error("No canvas elements found after PDF loaded");
+    }
+
     await page.waitForSelector("#viewer .page canvas", {
       timeout: 60000,
       visible: true,
