@@ -35,14 +35,14 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /home/pptruser/app
 COPY --chown=pptruser:pptruser package*.json ./
 
-# Switch to non-root user
+# As root, create the .npm cache dir with correct ownership
+RUN mkdir -p /home/pptruser/.npm && chown -R pptruser:pptruser /home/pptruser
+
+# Switch to non-root user after fixing permissions
 USER pptruser
 
-# Install dependencies
-RUN mkdir -p ~/.npm && npm install
-
-# Copy all source files after deps are installed
-COPY --chown=pptruser:pptruser . .
+# Now install dependencies
+RUN npm install
 
 # Set runtime environment
 ENV PORT=8080
