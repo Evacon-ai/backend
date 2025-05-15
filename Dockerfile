@@ -42,7 +42,7 @@ ENV PUPPETEER_CACHE_DIR=/home/pptruser/.cache/puppeteer
 
 # Install dependencies BEFORE switching user
 RUN npm install
-RUN npx puppeteer browsers install chrome
+RUN ./node_modules/.bin/puppeteer browsers install chrome
 
 # Set environment variables for Puppeteer stability
 ENV PORT=8080
