@@ -39,7 +39,16 @@ async function generatePdfPreview(storagePath) {
 
   const browser = await puppeteer.launch({
     headless: "new",
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage", // prevents /dev/shm overflow
+      "--disable-gpu",
+      "--disable-software-rasterizer",
+      "--disable-breakpad",
+      "--no-zygote",
+      "--single-process",
+    ],
   });
 
   const page = await browser.newPage();
@@ -47,6 +56,12 @@ async function generatePdfPreview(storagePath) {
   page.on("pageerror", (err) => console.error(`[VIEWER ERROR] ${err}`));
 
   try {
+    console.log("[TEST] Navigating to https://example.com...");
+    await page.goto("https://example.com", { waitUntil: "networkidle2" });
+    await new Promise((r) => setTimeout(r, 2000));
+    const buf = await page.screenshot({ path: "/tmp/test.png" });
+    console.log("[TEST] Ended successfully");
+
     console.log("[PREVIEW] Navigating to viewer...");
     await page.goto(viewerUrl, { waitUntil: "networkidle2" });
 
@@ -69,65 +84,6 @@ async function generatePdfPreview(storagePath) {
     const thumbBuffer = await sharp(previewBuffer)
       .resize({ width: 300 })
       .toBuffer();
-
-    // console.log("[DEBUG] Waiting for canvas...");
-    // await page.waitForFunction(
-    //   () => {
-    //     return !!document.querySelector("canvas");
-    //   },
-    //   { timeout: 20000 }
-    // );
-
-    // console.log("[DEBUG] Canvas appeared successfully");
-    // const canvasCount = await page.evaluate(
-    //   () => document.querySelectorAll("canvas").length
-    // );
-    // console.log(`[DEBUG] Found ${canvasCount} canvas elements`);
-
-    // if (canvasCount === 0) {
-    //   throw new Error("No canvas elements found — PDF may not have rendered.");
-    // }
-
-    // await page.waitForSelector("#viewer .page canvas", {
-    //   timeout: 60000,
-    //   visible: true,
-    // });
-
-    // const canvasHandle = await page.$("#viewer .page canvas");
-    // if (!canvasHandle) {
-    //   throw new Error("Canvas selector matched nothing");
-    // }
-
-    // console.log("[PREVIEW] Verifying canvas rendering content...");
-    // const hasContent = await page.evaluate(async (canvas) => {
-    //   const ctx = canvas.getContext("2d");
-    //   for (let i = 0; i < 30; i++) {
-    //     const imageData = ctx.getImageData(
-    //       0,
-    //       0,
-    //       canvas.width,
-    //       canvas.height
-    //     ).data;
-    //     if ([...imageData].some((v, i) => i % 4 !== 3 && v > 0)) {
-    //       return true;
-    //     }
-    //     await new Promise((r) => setTimeout(r, 500));
-    //   }
-    //   return false;
-    // }, canvasHandle);
-
-    // if (!hasContent) {
-    //   throw new Error(
-    //     "Timeout: Canvas was never rendered with visible content."
-    //   );
-    // }
-    // console.log("[PREVIEW] Canvas ready. Capturing screenshot...");
-    // const previewBuffer = await canvasHandle.screenshot();
-
-    // console.log("[PREVIEW] Resizing thumbnail...");
-    // const thumbBuffer = await sharp(previewBuffer)
-    //   .resize({ width: 300 })
-    //   .toBuffer();
 
     const dir = path.dirname(storagePath);
     const previewPath = `${dir}/preview.png`;
