@@ -51,7 +51,7 @@ async function generatePdfPreview(storagePath) {
     await page.goto(viewerUrl, { waitUntil: "networkidle2" });
 
     console.log("[DEBUG] Waiting 3s before checking canvas...");
-    await page.waitForTimeout(3000);
+    await new Promise((r) => setTimeout(r, 3000));
 
     console.log("[DEBUG] Taking initial debug screenshot...");
     await page.screenshot({ path: "/tmp/viewer_debug.png", fullPage: true });
