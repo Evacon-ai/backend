@@ -39,9 +39,6 @@ COPY package*.json ./
 # Install all node modules including puppeteer
 RUN npm install
 
-# Now that puppeteer is installed, install Chrome explicitly
-RUN node -e "require('puppeteer').createBrowserFetcher({ product: 'chrome' }).download(require('puppeteer/package.json').puppeteer.chromium_revision)"
-
 # Copy project files
 COPY . .
 
