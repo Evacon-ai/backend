@@ -52,75 +52,82 @@ async function generatePdfPreview(storagePath) {
 
     console.log("[DEBUG] Waiting 3s before checking canvas...");
     await page.setViewport({ width: 1280, height: 800 });
-    await new Promise((r) => setTimeout(r, 3000));
+    await new Promise((r) => setTimeout(r, 10000));
 
     console.log("[DEBUG] Checking canvas presence...");
     if (page.isClosed()) {
-      console.log("[ERROR] Page is already closed before canvas check.");
-      throw new Error("Page is already closed before canvas check.");
+      console.log("[ERROR] Page was closed before screenshot.");
+      throw new Error("Page was closed before screenshot.");
     }
 
     const frameUrl = page.mainFrame().url();
     console.log("[DEBUG] Main frame URL:", frameUrl);
 
-    console.log("[DEBUG] Waiting for canvas...");
-    await page.waitForFunction(
-      () => {
-        return !!document.querySelector("canvas");
-      },
-      { timeout: 20000 }
-    );
+    console.log("[DEBUG] Capturing screenshot...");
+    const previewBuffer = await page.screenshot(); // just screenshot visible viewport
 
-    console.log("[DEBUG] Canvas appeared successfully");
-    const canvasCount = await page.evaluate(
-      () => document.querySelectorAll("canvas").length
-    );
-    console.log(`[DEBUG] Found ${canvasCount} canvas elements`);
-
-    if (canvasCount === 0) {
-      throw new Error("No canvas elements found — PDF may not have rendered.");
-    }
-
-    await page.waitForSelector("#viewer .page canvas", {
-      timeout: 60000,
-      visible: true,
-    });
-
-    const canvasHandle = await page.$("#viewer .page canvas");
-    if (!canvasHandle) {
-      throw new Error("Canvas selector matched nothing");
-    }
-
-    console.log("[PREVIEW] Verifying canvas rendering content...");
-    const hasContent = await page.evaluate(async (canvas) => {
-      const ctx = canvas.getContext("2d");
-      for (let i = 0; i < 30; i++) {
-        const imageData = ctx.getImageData(
-          0,
-          0,
-          canvas.width,
-          canvas.height
-        ).data;
-        if ([...imageData].some((v, i) => i % 4 !== 3 && v > 0)) {
-          return true;
-        }
-        await new Promise((r) => setTimeout(r, 500));
-      }
-      return false;
-    }, canvasHandle);
-
-    if (!hasContent) {
-      throw new Error(
-        "Timeout: Canvas was never rendered with visible content."
-      );
-    }
-    console.log("[PREVIEW] Canvas ready. Capturing screenshot...");
-    const previewBuffer = await canvasHandle.screenshot();
-
-    console.log("[PREVIEW] Resizing thumbnail...");
     const thumbBuffer = await sharp(previewBuffer)
       .resize({ width: 300 })
       .toBuffer();
+
+    // console.log("[DEBUG] Waiting for canvas...");
+    // await page.waitForFunction(
+    //   () => {
+    //     return !!document.querySelector("canvas");
+    //   },
+    //   { timeout: 20000 }
+    // );
+
+    // console.log("[DEBUG] Canvas appeared successfully");
+    // const canvasCount = await page.evaluate(
+    //   () => document.querySelectorAll("canvas").length
+    // );
+    // console.log(`[DEBUG] Found ${canvasCount} canvas elements`);
+
+    // if (canvasCount === 0) {
+    //   throw new Error("No canvas elements found — PDF may not have rendered.");
+    // }
+
+    // await page.waitForSelector("#viewer .page canvas", {
+    //   timeout: 60000,
+    //   visible: true,
+    // });
+
+    // const canvasHandle = await page.$("#viewer .page canvas");
+    // if (!canvasHandle) {
+    //   throw new Error("Canvas selector matched nothing");
+    // }
+
+    // console.log("[PREVIEW] Verifying canvas rendering content...");
+    // const hasContent = await page.evaluate(async (canvas) => {
+    //   const ctx = canvas.getContext("2d");
+    //   for (let i = 0; i < 30; i++) {
+    //     const imageData = ctx.getImageData(
+    //       0,
+    //       0,
+    //       canvas.width,
+    //       canvas.height
+    //     ).data;
+    //     if ([...imageData].some((v, i) => i % 4 !== 3 && v > 0)) {
+    //       return true;
+    //     }
+    //     await new Promise((r) => setTimeout(r, 500));
+    //   }
+    //   return false;
+    // }, canvasHandle);
+
+    // if (!hasContent) {
+    //   throw new Error(
+    //     "Timeout: Canvas was never rendered with visible content."
+    //   );
+    // }
+    // console.log("[PREVIEW] Canvas ready. Capturing screenshot...");
+    // const previewBuffer = await canvasHandle.screenshot();
+
+    // console.log("[PREVIEW] Resizing thumbnail...");
+    // const thumbBuffer = await sharp(previewBuffer)
+    //   .resize({ width: 300 })
+    //   .toBuffer();
 
     const dir = path.dirname(storagePath);
     const previewPath = `${dir}/preview.png`;
