@@ -1,5 +1,12 @@
 FROM node:22-slim
 
+# Add a non-root user for Chromium sandboxing (optional but cleaner)
+RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser
+
+# Let Puppeteer install its own compatible Chrome
+ENV PUPPETEER_SKIP_DOWNLOAD=false
+ENV PUPPETEER_CACHE_DIR=/home/pptruser/.cache/puppeteer
+
 # Install Chromium dependencies
 RUN apt-get update && apt-get install -y \
   ca-certificates \
@@ -21,28 +28,22 @@ RUN apt-get update && apt-get install -y \
   libxrandr2 \
   xdg-utils \
   wget \
-  libxshmfence1 \
-  libxext6 \
-  libxfixes3 \
-  libgl1 \
   --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Add a non-root user for Chromium sandboxing (optional but cleaner)
-RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser
-
-# Set working directory
+# Create app dir
 WORKDIR /app
+
+# Copy only package files first for cache
+COPY package*.json ./
+
+# Install all node modules including puppeteer
+RUN npm install
+
+# Now that puppeteer is installed, install Chrome explicitly
+RUN npx puppeteer browsers install chrome
 
 # Copy project files
 COPY . .
-
-# Let Puppeteer install its own compatible Chrome
-ENV PUPPETEER_SKIP_DOWNLOAD=false
-ENV PUPPETEER_CACHE_DIR=/home/pptruser/.cache/puppeteer
-
-# Install dependencies BEFORE switching user
-RUN npm install
-RUN ./node_modules/.bin/puppeteer browsers install chrome
 
 # Set environment variables for Puppeteer stability
 ENV PORT=8080
