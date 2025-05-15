@@ -56,12 +56,20 @@ async function generatePdfPreview(storagePath) {
 
     console.log("[DEBUG] Checking canvas presence...");
     if (page.isClosed()) {
+      console.log("[ERROR] Page is already closed before canvas check.");
       throw new Error("Page is already closed before canvas check.");
     }
 
-    const canvasCount = await page.evaluate(() => {
-      return document.querySelectorAll("canvas").length;
-    });
+    const frameUrl = page.mainFrame().url();
+    console.log("[DEBUG] Main frame URL:", frameUrl);
+
+    console.log("[DEBUG] Waiting for canvas...");
+    await page.waitForSelector("canvas", { timeout: 20000 });
+
+    console.log("[DEBUG] Canvas appeared successfully");
+    const canvasCount = await page.evaluate(
+      () => document.querySelectorAll("canvas").length
+    );
     console.log(`[DEBUG] Found ${canvasCount} canvas elements`);
 
     if (canvasCount === 0) {
