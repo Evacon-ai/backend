@@ -16,7 +16,7 @@
     "helmet": "^7.1.0",
     "morgan": "^1.10.0",
     "node-fetch": "^2.7.0",
-    "puppeteer": "^24.8.2",
+    "puppeteer": "21.1.1",
     "secure-random-password": "^0.2.3",
     "sharp": "^0.34.1",
     "uuid": "^11.1.0"

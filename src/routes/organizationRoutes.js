@@ -9,6 +9,7 @@ router.all("*", verifyAuth);
 // Routes that require admin access
 router.get("/", organizationController.getAllOrganizations);
 router.get("/:id", organizationController.getOrganizationById);
+router.get("/:id/projects", organizationController.getOrganizationProjects);
 router.post("/", organizationController.createOrganization);
 router.put("/:id", organizationController.updateOrganization);
 router.delete("/:id", organizationController.deleteOrganization);
