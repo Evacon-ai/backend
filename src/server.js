@@ -20,8 +20,12 @@ app.use(morgan("dev")); // Request logging
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use(
-  "/pdf-viewer",
+  "/pdf-viewer/web",
   express.static(path.join(__dirname, "../public/pdf-viewer/web"))
+);
+app.use(
+  "/pdf-viewer/build",
+  express.static(path.join(__dirname, "../public/pdf-viewer/build"))
 );
 
 // Health check endpoint with detailed status
