@@ -37,22 +37,25 @@ async function generatePdfPreview(storagePath) {
   const viewerUrl = `${viewerBaseUrl}/pdf-viewer/web/viewer.html?file=${encodedProxyUrl}`;
   console.log(`[DEBUG] viewerUrl: ${viewerUrl}`);
 
+  console.log("[TEST] Using Chrome from:", puppeteer.executablePath());
+
   const browser = await puppeteer.launch({
     headless: "new",
+    executablePath: puppeteer.executablePath(), // <- ensures correct binary
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage", // prevents /dev/shm overflow
+      "--disable-dev-shm-usage",
       "--disable-gpu",
       "--disable-software-rasterizer",
       "--disable-breakpad",
       "--no-zygote",
       "--single-process",
-      "--disable-crash-reporter",
+      "--disable-crash-reporter", // <- required
     ],
   });
-  console.log("[TEST] Using Chrome from:", puppeteer.executablePath());
 
+  console.log("[TEST] Browser launched");
   const page = await browser.newPage();
   page.on("console", (msg) => console.log(`[VIEWER LOG] ${msg.text()}`));
   page.on("pageerror", (err) => console.error(`[VIEWER ERROR] ${err}`));

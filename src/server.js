@@ -99,6 +99,12 @@ app.get("/pdf-proxy", async (req, res) => {
   }
 });
 
+app.get("/puppet-test", async (req, res) => {
+  const puppeteer = require("puppeteer");
+  const path = puppeteer.executablePath();
+  res.send("Using Chrome from: " + path);
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: "Not Found" });
