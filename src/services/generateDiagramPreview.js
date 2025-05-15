@@ -30,14 +30,13 @@ async function generatePdfPreview(storagePath) {
   const viewerBaseUrl = process.env.VIEWER_BASE_URL;
   if (!viewerBaseUrl) throw new Error("Missing VIEWER_BASE_URL");
 
+  console.log("[DEBUG] pdfUrl:", pdfUrl);
   const proxiedPdfUrl = `${viewerBaseUrl}/pdf-proxy?url=${encodeURIComponent(
     pdfUrl
   )}`;
-
   console.log("[DEBUG] proxiedPdfUrl:", proxiedPdfUrl);
-
   const viewerUrl = `${viewerBaseUrl}/pdf-viewer/viewer.html?file=${proxiedPdfUrl}`;
-  console.log(`[PREVIEW] Using viewer URL: ${viewerUrl}`);
+  console.log(`[DEBUG] viewerUrl: ${viewerUrl}`);
 
   const browser = await puppeteer.launch({
     headless: "new",
