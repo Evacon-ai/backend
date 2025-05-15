@@ -48,6 +48,7 @@ async function generatePdfPreview(storagePath) {
       "--disable-breakpad",
       "--no-zygote",
       "--single-process",
+      "--disable-crash-reporter",
     ],
   });
   console.log("[TEST] Using Chrome from:", puppeteer.executablePath());
