@@ -35,7 +35,14 @@ RUN apt-get update && apt-get install -y \
 USER pptruser
 WORKDIR /home/pptruser/app
 
-COPY package*.json ./
+# Copy package files and fix permissions
+COPY --chown=pptruser:pptruser package*.json ./
+
+# FIX: Set correct ownership on npm folders
+RUN mkdir -p /home/pptruser/.npm && \
+  chown -R pptruser:pptruser /home/pptruser/.npm
+
+# Install dependencies
 RUN npm install
 
 # Copy project files
