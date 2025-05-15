@@ -40,7 +40,7 @@ COPY package*.json ./
 RUN npm install
 
 # Now that puppeteer is installed, install Chrome explicitly
-RUN npx puppeteer browsers install chrome
+RUN node ./node_modules/puppeteer/lib/cjs/puppeteer/revisions.js install chrome
 
 # Copy project files
 COPY . .
