@@ -64,7 +64,12 @@ async function generatePdfPreview(storagePath) {
     console.log("[DEBUG] Main frame URL:", frameUrl);
 
     console.log("[DEBUG] Waiting for canvas...");
-    await page.waitForSelector("canvas", { timeout: 20000 });
+    await page.waitForFunction(
+      () => {
+        return !!document.querySelector("canvas");
+      },
+      { timeout: 20000 }
+    );
 
     console.log("[DEBUG] Canvas appeared successfully");
     const canvasCount = await page.evaluate(
