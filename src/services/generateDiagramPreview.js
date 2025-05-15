@@ -30,71 +30,76 @@ async function generatePdfPreview(storagePath) {
   const viewerBaseUrl = process.env.VIEWER_BASE_URL;
   if (!viewerBaseUrl) throw new Error("Missing VIEWER_BASE_URL");
 
-  console.log("[DEBUG] pdfUrl:", pdfUrl);
   const proxiedPdfUrl = `${viewerBaseUrl}/pdf-proxy?url=${encodeURIComponent(
     pdfUrl
   )}`;
-  console.log("[DEBUG] proxiedPdfUrl:", proxiedPdfUrl);
   const encodedProxyUrl = encodeURIComponent(proxiedPdfUrl);
   const viewerUrl = `${viewerBaseUrl}/pdf-viewer/web/viewer.html?file=${encodedProxyUrl}`;
   console.log(`[DEBUG] viewerUrl: ${viewerUrl}`);
 
-  console.log("[PREVIEW] Launching browser");
   const browser = await puppeteer.launch({
     headless: "new",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
   const page = await browser.newPage();
-  console.log("[PREVIEW] Going to viewer:", viewerUrl);
-
-  // Pipe viewer console logs into Node logs
   page.on("console", (msg) => console.log(`[VIEWER LOG] ${msg.text()}`));
   page.on("pageerror", (err) => console.error(`[VIEWER ERROR] ${err}`));
 
   try {
+    console.log("[PREVIEW] Navigating to viewer...");
     await page.goto(viewerUrl, { waitUntil: "networkidle2" });
 
-    console.log("[DEBUG] Taking screenshot before canvas wait...");
+    console.log("[DEBUG] Waiting 3s before checking canvas...");
+    await page.waitForTimeout(3000);
+
+    console.log("[DEBUG] Taking initial debug screenshot...");
     await page.screenshot({ path: "/tmp/viewer_debug.png", fullPage: true });
 
-    console.log("[DEBUG] Counting canvases...");
-    const count = await page.$$eval("canvas", (els) => els.length);
-    console.log(`[DEBUG] Found ${count} canvas elements`);
+    const canvasCount = await page.$$eval("canvas", (els) => els.length);
+    console.log(`[DEBUG] Found ${canvasCount} canvas elements`);
 
-    if (count === 0) {
-      throw new Error("No canvas elements found after PDF loaded");
+    if (canvasCount === 0) {
+      throw new Error("No canvas elements found — PDF may not have rendered.");
     }
 
     await page.waitForSelector("#viewer .page canvas", {
       timeout: 60000,
       visible: true,
     });
-    console.log("[PREVIEW] Canvas element found.");
 
     const canvasHandle = await page.$("#viewer .page canvas");
+    if (!canvasHandle) {
+      throw new Error("Canvas selector matched nothing");
+    }
 
-    console.log("[PREVIEW] Waiting for canvas to be rendered...");
-    await page.evaluate(async (canvas) => {
+    console.log("[PREVIEW] Verifying canvas rendering content...");
+    const hasContent = await page.evaluate(async (canvas) => {
       const ctx = canvas.getContext("2d");
-      let attempts = 0;
-      let hasContent = false;
-
-      while (attempts < 30 && !hasContent) {
+      for (let i = 0; i < 30; i++) {
+        const imageData = ctx.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        ).data;
+        if ([...imageData].some((v, i) => i % 4 !== 3 && v > 0)) {
+          return true;
+        }
         await new Promise((r) => setTimeout(r, 500));
-        const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-        hasContent = pixels.some((v, i) => i % 4 !== 3 && v > 0);
-        attempts++;
       }
-
-      if (!hasContent) {
-        throw new Error("Timeout: Canvas was not rendered with PDF content.");
-      }
+      return false;
     }, canvasHandle);
 
-    console.log("[PREVIEW] Canvas rendering confirmed. Taking screenshot...");
+    if (!hasContent) {
+      throw new Error(
+        "Timeout: Canvas was never rendered with visible content."
+      );
+    }
+    console.log("[PREVIEW] Canvas ready. Capturing screenshot...");
     const previewBuffer = await canvasHandle.screenshot();
 
+    console.log("[PREVIEW] Resizing thumbnail...");
     const thumbBuffer = await sharp(previewBuffer)
       .resize({ width: 300 })
       .toBuffer();
@@ -108,7 +113,7 @@ async function generatePdfPreview(storagePath) {
       uploadToFirebase(thumbBuffer, thumbPath),
     ]);
 
-    console.log("[PREVIEW] Thumbnail and preview uploaded successfully.");
+    console.log("[PREVIEW] Upload complete.");
     return { previewUrl, thumbnailUrl };
   } catch (error) {
     console.error(`[PREVIEW ERROR] ${error.message}`);
