@@ -51,7 +51,9 @@ async function generatePdfPreview(storagePath) {
       "--disable-breakpad",
       "--no-zygote",
       "--single-process",
-      "--disable-crash-reporter", // <- required
+      "--disable-crash-reporter",
+      "--no-default-browser-check",
+      "--no-first-run",
     ],
   });
 
