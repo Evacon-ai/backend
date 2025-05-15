@@ -50,6 +50,7 @@ async function generatePdfPreview(storagePath) {
       "--single-process",
     ],
   });
+  console.log("[TEST] Using Chrome from:", puppeteer.executablePath());
 
   const page = await browser.newPage();
   page.on("console", (msg) => console.log(`[VIEWER LOG] ${msg.text()}`));

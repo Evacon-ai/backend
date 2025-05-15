@@ -21,20 +21,39 @@ RUN apt-get update && apt-get install -y \
   libxrandr2 \
   xdg-utils \
   wget \
+  libxshmfence1 \
+  libxext6 \
+  libxfixes3 \
+  libgl1 \
   --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Create app directory
+# Add a non-root user for Chromium sandboxing (optional but cleaner)
+RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser
+
+# Set working directory
 WORKDIR /app
 
 # Copy project files
 COPY . .
 
-# Install dependencies
+# Install Node dependencies
 RUN npm install
 
-# Expose port for Cloud Run
+# Tell Puppeteer not to install its own Chromium (we use system one)
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+
+# Use the bundled Chromium that Puppeteer installed
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+
+# Set environment variables for Puppeteer stability
 ENV PORT=8080
+ENV NODE_ENV=production
+
+# Expose port for Cloud Run
 EXPOSE 8080
+
+# Run as non-root user
+USER pptruser
 
 # Start the app
 CMD ["node", "src/server.js"]
