@@ -35,12 +35,13 @@ async function generatePdfPreview(storagePath) {
   )}`;
   const encodedProxyUrl = encodeURIComponent(proxiedPdfUrl);
   const viewerUrl = `${viewerBaseUrl}/pdf-viewer/web/viewer.html?file=${encodedProxyUrl}`;
-  console.log(`[DEBUG] viewerUrl: ${viewerUrl}`);
+
+  console.log("[TEST] Using Chrome from:", puppeteer.executablePath());
 
   process.env.CHROME_CRASHPAD_PIPE_NAME = "";
   process.env.TMPDIR = "/tmp";
 
-  console.log("[TEST] Using Chrome from:", puppeteer.executablePath());
+  console.log(`[DEBUG] viewerUrl: ${viewerUrl}`);
 
   const browser = await puppeteer.launch({
     headless: "new",

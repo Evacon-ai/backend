@@ -3,8 +3,9 @@ FROM node:22-slim
 # Add a non-root user for Chromium sandboxing (optional but cleaner)
 RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser
 
-# Let Puppeteer install its own compatible Chrome
+# Set environment for Puppeteer
 ENV PUPPETEER_SKIP_DOWNLOAD=false
+ENV PUPPETEER_PRODUCT=chrome
 ENV PUPPETEER_CACHE_DIR=/home/pptruser/.cache/puppeteer
 
 # Install Chromium dependencies
@@ -30,13 +31,11 @@ RUN apt-get update && apt-get install -y \
   wget \
   --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Create app dir
-WORKDIR /app
+# Switch to pptruser before install
+USER pptruser
+WORKDIR /home/pptruser/app
 
-# Copy only package files first for cache
 COPY package*.json ./
-
-# Install all node modules including puppeteer
 RUN npm install
 
 # Copy project files
@@ -48,9 +47,6 @@ ENV NODE_ENV=production
 
 # Expose port for Cloud Run
 EXPOSE 8080
-
-# Run as non-root user
-USER pptruser
 
 # Start the app
 CMD ["node", "src/server.js"]
