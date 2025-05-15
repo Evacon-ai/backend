@@ -51,12 +51,17 @@ async function generatePdfPreview(storagePath) {
     await page.goto(viewerUrl, { waitUntil: "networkidle2" });
 
     console.log("[DEBUG] Waiting 3s before checking canvas...");
+    await page.setViewport({ width: 1280, height: 800 });
     await new Promise((r) => setTimeout(r, 3000));
 
-    console.log("[DEBUG] Taking initial debug screenshot...");
-    // await page.screenshot({ path: "/tmp/viewer_debug.png" }); // no fullPage
+    console.log("[DEBUG] Checking canvas presence...");
+    if (page.isClosed()) {
+      throw new Error("Page is already closed before canvas check.");
+    }
 
-    const canvasCount = await page.$$eval("canvas", (els) => els.length);
+    const canvasCount = await page.evaluate(() => {
+      return document.querySelectorAll("canvas").length;
+    });
     console.log(`[DEBUG] Found ${canvasCount} canvas elements`);
 
     if (canvasCount === 0) {
