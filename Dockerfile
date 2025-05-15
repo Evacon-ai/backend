@@ -36,11 +36,13 @@ WORKDIR /app
 # Copy project files
 COPY . .
 
-# Install Node dependencies
-RUN npm install
-
-# Tell Puppeteer not to install its own Chromium (we use system one)
+# Let Puppeteer install its own compatible Chrome
 ENV PUPPETEER_SKIP_DOWNLOAD=false
+ENV PUPPETEER_CACHE_DIR=/home/pptruser/.cache/puppeteer
+
+# Install dependencies BEFORE switching user
+RUN npm install && \
+  npx puppeteer browsers install chrome
 
 # Set environment variables for Puppeteer stability
 ENV PORT=8080
