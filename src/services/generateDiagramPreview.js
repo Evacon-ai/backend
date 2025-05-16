@@ -1,4 +1,4 @@
-const { fromPath } = require("pdf2pic");
+const { fromBuffer } = require("pdf2pic");
 const sharp = require("sharp");
 const path = require("path");
 const fetch = require("node-fetch");
