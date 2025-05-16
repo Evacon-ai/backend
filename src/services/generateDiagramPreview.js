@@ -1,7 +1,6 @@
 const fs = require("fs/promises");
 const path = require("path");
 const fetch = require("node-fetch");
-// const { convert } = require("pdf-poppler");
 const sharp = require("sharp");
 const { bucket } = require("../config/firebase");
 const { v4: uuidv4 } = require("uuid");
@@ -22,6 +21,13 @@ async function generateDiagramPreview(storagePath) {
 }
 
 async function generatePdfPreview(storagePath) {
+  let convert;
+  try {
+    ({ convert } = require("pdf-poppler"));
+  } catch (err) {
+    console.error("[PDF PREVIEW] Failed to load pdf-poppler:", err.message);
+    throw err;
+  }
   // const [pdfUrl] = await bucket.file(storagePath).getSignedUrl({
   //   action: "read",
   //   expires: Date.now() + 15 * 60 * 1000,
