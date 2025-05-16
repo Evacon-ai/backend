@@ -22,9 +22,12 @@ async function generateDiagramPreview(storagePath) {
 
 async function generatePdfPreview(storagePath) {
   let convert;
+  console.log("[PDF PREVIEW] Generating preview for PDF:", storagePath);
   try {
     ({ convert } = require("pdf-poppler"));
+    console.log("[PDF PREVIEW] { convert } = require(pdf-poppler)");
   } catch (err) {
+    console.log("[PDF PREVIEW] Failed to load pdf-poppler:", err.message);
     console.error("[PDF PREVIEW] Failed to load pdf-poppler:", err.message);
     throw err;
   }
@@ -32,13 +35,18 @@ async function generatePdfPreview(storagePath) {
     action: "read",
     expires: Date.now() + 15 * 60 * 1000,
   });
+  console.log("[PDF PREVIEW] ----1----");
   const tmpPdfPath = "/tmp/input.pdf";
   const tmpImagePrefix = "/tmp/preview";
   // Download PDF
   const res = await fetch(pdfUrl);
+  console.log("[PDF PREVIEW] ----2----");
   if (!res.ok) throw new Error("Failed to download PDF");
+  console.log("[PDF PREVIEW] ----3----");
   const pdfBuffer = await res.buffer();
+  console.log("[PDF PREVIEW] ----4----");
   await fs.writeFile(tmpPdfPath, pdfBuffer);
+  console.log("[PDF PREVIEW] ----5----");
   // Convert first page
   await convert(tmpPdfPath, {
     format: "png",
@@ -47,10 +55,13 @@ async function generatePdfPreview(storagePath) {
     page: 1,
     scale: 150,
   });
+  console.log("[PDF PREVIEW] ----6----");
   const previewBuffer = await fs.readFile("/tmp/preview-1.png");
+  console.log("[PDF PREVIEW] ----7----");
   const thumbBuffer = await sharp(previewBuffer)
     .resize({ width: 300 })
     .toBuffer();
+  console.log("[PDF PREVIEW] ----8----");
   const dir = path.dirname(storagePath);
   const previewPath = `${dir}/preview.png`;
   const thumbPath = `${dir}/thumb.png`;
@@ -58,6 +69,7 @@ async function generatePdfPreview(storagePath) {
     uploadToFirebase(previewBuffer, previewPath),
     uploadToFirebase(thumbBuffer, thumbPath),
   ]);
+  console.log("[PDF PREVIEW] ----9----");
   return { previewUrl, thumbnailUrl };
 }
 
