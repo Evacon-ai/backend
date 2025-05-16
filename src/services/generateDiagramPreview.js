@@ -39,7 +39,7 @@ async function generatePdfPreview(storagePath) {
 
   const pdfBuffer = Buffer.from(await res.arrayBuffer());
   console.log("[PDF PREVIEW] ----4----");
-  await fs.writeFile(tmpPdfPath, pdfBuffer);
+  await fs.writeFile(inputPath, pdfBuffer);
   console.log("[PDF PREVIEW] ----5----");
   // Convert the first page using pdftoppm
   await poppler.pdfToCairo(inputPath, outputPath.replace(".png", ""), {
