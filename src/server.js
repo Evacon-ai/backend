@@ -12,9 +12,6 @@ const projectRoutes = require("./routes/projectRoutes");
 
 const app = express();
 const port = process.env.PORT || 3000; // Local dev defaults to 3000
-app.listen(port, () => {
-  console.log(`Listening on port ${port}`);
-});
 
 // Middleware
 app.use(helmet()); // Security headers
@@ -100,12 +97,6 @@ app.get("/pdf-proxy", async (req, res) => {
     console.error("PDF proxy failed:", err);
     res.status(500).send("Failed to fetch PDF");
   }
-});
-
-app.get("/puppet-test", async (req, res) => {
-  const puppeteer = require("puppeteer");
-  const path = puppeteer.executablePath();
-  res.send("Using Chrome from: " + path);
 });
 
 // 404 handler

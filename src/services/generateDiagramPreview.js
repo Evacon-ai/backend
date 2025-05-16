@@ -1,4 +1,3 @@
-const puppeteer = require("puppeteer");
 const sharp = require("sharp");
 const { bucket } = require("../config/firebase");
 const { v4: uuidv4 } = require("uuid");
@@ -20,100 +19,82 @@ async function generateDiagramPreview(storagePath) {
 }
 
 async function generatePdfPreview(storagePath) {
-  console.log(`[PREVIEW] Generating preview for: ${storagePath}`);
-
-  const [pdfUrl] = await bucket.file(storagePath).getSignedUrl({
-    action: "read",
-    expires: Date.now() + 15 * 60 * 1000,
-  });
-
-  const viewerBaseUrl = process.env.VIEWER_BASE_URL;
-  if (!viewerBaseUrl) throw new Error("Missing VIEWER_BASE_URL");
-
-  const proxiedPdfUrl = `${viewerBaseUrl}/pdf-proxy?url=${encodeURIComponent(
-    pdfUrl
-  )}`;
-  const encodedProxyUrl = encodeURIComponent(proxiedPdfUrl);
-  const viewerUrl = `${viewerBaseUrl}/pdf-viewer/web/viewer.html?file=${encodedProxyUrl}`;
-
-  console.log("[TEST] Using Chrome from:", puppeteer.executablePath());
-
-  process.env.CHROME_CRASHPAD_PIPE_NAME = "";
-  process.env.TMPDIR = "/tmp";
-
-  console.log(`[DEBUG] viewerUrl: ${viewerUrl}`);
-
-  const browser = await puppeteer.launch({
-    headless: "new",
-    executablePath: puppeteer.executablePath(), // <- ensures correct binary
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      "--disable-software-rasterizer",
-      "--disable-breakpad",
-      "--no-zygote",
-      "--single-process",
-      "--disable-crash-reporter",
-      "--no-default-browser-check",
-      "--no-first-run",
-    ],
-  });
-
-  console.log("[TEST] Browser launched");
-  const page = await browser.newPage();
-  page.on("console", (msg) => console.log(`[VIEWER LOG] ${msg.text()}`));
-  page.on("pageerror", (err) => console.error(`[VIEWER ERROR] ${err}`));
-
-  try {
-    console.log("[TEST] Navigating to https://example.com...");
-    await page.goto("https://example.com", { waitUntil: "networkidle2" });
-    await new Promise((r) => setTimeout(r, 2000));
-    const buf = await page.screenshot({ path: "/tmp/test.png" });
-    console.log("[TEST] Ended successfully");
-
-    console.log("[PREVIEW] Navigating to viewer...");
-    await page.goto(viewerUrl, { waitUntil: "networkidle2" });
-
-    console.log("[DEBUG] Waiting 3s before checking canvas...");
-    await page.setViewport({ width: 1280, height: 800 });
-    await new Promise((r) => setTimeout(r, 10000));
-
-    console.log("[DEBUG] Checking canvas presence...");
-    if (page.isClosed()) {
-      console.log("[ERROR] Page was closed before screenshot.");
-      throw new Error("Page was closed before screenshot.");
-    }
-
-    const frameUrl = page.mainFrame().url();
-    console.log("[DEBUG] Main frame URL:", frameUrl);
-
-    console.log("[DEBUG] Capturing screenshot...");
-    const previewBuffer = await page.screenshot(); // just screenshot visible viewport
-
-    const thumbBuffer = await sharp(previewBuffer)
-      .resize({ width: 300 })
-      .toBuffer();
-
-    const dir = path.dirname(storagePath);
-    const previewPath = `${dir}/preview.png`;
-    const thumbPath = `${dir}/thumb.png`;
-
-    const [previewUrl, thumbnailUrl] = await Promise.all([
-      uploadToFirebase(previewBuffer, previewPath),
-      uploadToFirebase(thumbBuffer, thumbPath),
-    ]);
-
-    console.log("[PREVIEW] Upload complete.");
-    return { previewUrl, thumbnailUrl };
-  } catch (error) {
-    console.error(`[PREVIEW ERROR] ${error.message}`);
-    throw error;
-  } finally {
-    await browser.close();
-    console.log("[PREVIEW] Browser closed.");
-  }
+  // console.log(`[PREVIEW] Generating preview for: ${storagePath}`);
+  // const [pdfUrl] = await bucket.file(storagePath).getSignedUrl({
+  //   action: "read",
+  //   expires: Date.now() + 15 * 60 * 1000,
+  // });
+  // const viewerBaseUrl = process.env.VIEWER_BASE_URL;
+  // if (!viewerBaseUrl) throw new Error("Missing VIEWER_BASE_URL");
+  // const proxiedPdfUrl = `${viewerBaseUrl}/pdf-proxy?url=${encodeURIComponent(
+  //   pdfUrl
+  // )}`;
+  // const encodedProxyUrl = encodeURIComponent(proxiedPdfUrl);
+  // const viewerUrl = `${viewerBaseUrl}/pdf-viewer/web/viewer.html?file=${encodedProxyUrl}`;
+  // console.log("[TEST] Using Chrome from:", puppeteer.executablePath());
+  // process.env.CHROME_CRASHPAD_PIPE_NAME = "";
+  // process.env.TMPDIR = "/tmp";
+  // console.log(`[DEBUG] viewerUrl: ${viewerUrl}`);
+  // const browser = await puppeteer.launch({
+  //   headless: "new",
+  //   executablePath: puppeteer.executablePath(), // <- ensures correct binary
+  //   args: [
+  //     "--no-sandbox",
+  //     "--disable-setuid-sandbox",
+  //     "--disable-dev-shm-usage",
+  //     "--disable-gpu",
+  //     "--disable-software-rasterizer",
+  //     "--disable-breakpad",
+  //     "--no-zygote",
+  //     "--single-process",
+  //     "--disable-crash-reporter",
+  //     "--no-default-browser-check",
+  //     "--no-first-run",
+  //   ],
+  // });
+  // console.log("[TEST] Browser launched");
+  // const page = await browser.newPage();
+  // page.on("console", (msg) => console.log(`[VIEWER LOG] ${msg.text()}`));
+  // page.on("pageerror", (err) => console.error(`[VIEWER ERROR] ${err}`));
+  // try {
+  //   console.log("[TEST] Navigating to https://example.com...");
+  //   await page.goto("https://example.com", { waitUntil: "networkidle2" });
+  //   await new Promise((r) => setTimeout(r, 2000));
+  //   const buf = await page.screenshot({ path: "/tmp/test.png" });
+  //   console.log("[TEST] Ended successfully");
+  //   console.log("[PREVIEW] Navigating to viewer...");
+  //   await page.goto(viewerUrl, { waitUntil: "networkidle2" });
+  //   console.log("[DEBUG] Waiting 3s before checking canvas...");
+  //   await page.setViewport({ width: 1280, height: 800 });
+  //   await new Promise((r) => setTimeout(r, 10000));
+  //   console.log("[DEBUG] Checking canvas presence...");
+  //   if (page.isClosed()) {
+  //     console.log("[ERROR] Page was closed before screenshot.");
+  //     throw new Error("Page was closed before screenshot.");
+  //   }
+  //   const frameUrl = page.mainFrame().url();
+  //   console.log("[DEBUG] Main frame URL:", frameUrl);
+  //   console.log("[DEBUG] Capturing screenshot...");
+  //   const previewBuffer = await page.screenshot(); // just screenshot visible viewport
+  //   const thumbBuffer = await sharp(previewBuffer)
+  //     .resize({ width: 300 })
+  //     .toBuffer();
+  //   const dir = path.dirname(storagePath);
+  //   const previewPath = `${dir}/preview.png`;
+  //   const thumbPath = `${dir}/thumb.png`;
+  //   const [previewUrl, thumbnailUrl] = await Promise.all([
+  //     uploadToFirebase(previewBuffer, previewPath),
+  //     uploadToFirebase(thumbBuffer, thumbPath),
+  //   ]);
+  //   console.log("[PREVIEW] Upload complete.");
+  //   return { previewUrl, thumbnailUrl };
+  // } catch (error) {
+  //   console.error(`[PREVIEW ERROR] ${error.message}`);
+  //   throw error;
+  // } finally {
+  //   await browser.close();
+  //   console.log("[PREVIEW] Browser closed.");
+  // }
 }
 
 async function generateImageThumbnail(storagePath) {
