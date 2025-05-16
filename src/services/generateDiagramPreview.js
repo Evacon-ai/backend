@@ -1,7 +1,7 @@
 // const fs = require("fs/promises");
 const path = require("path");
 const fetch = require("node-fetch");
-// const { convert } = require("pdf-poppler");
+const { convert } = require("pdf-poppler");
 const sharp = require("sharp");
 const { bucket } = require("../config/firebase");
 const { v4: uuidv4 } = require("uuid");
