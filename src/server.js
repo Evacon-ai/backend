@@ -11,7 +11,10 @@ const organizationRoutes = require("./routes/organizationRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 
 const app = express();
-const port = process.env.PORT ?? 8080;
+const port = process.env.PORT || 3000; // Local dev defaults to 3000
+app.listen(port, () => {
+  console.log(`Listening on port ${port}`);
+});
 
 // Middleware
 app.use(helmet()); // Security headers
