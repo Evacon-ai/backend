@@ -28,37 +28,37 @@ async function generatePdfPreview(storagePath) {
     console.error("[PDF PREVIEW] Failed to load pdf-poppler:", err.message);
     throw err;
   }
-  // const [pdfUrl] = await bucket.file(storagePath).getSignedUrl({
-  //   action: "read",
-  //   expires: Date.now() + 15 * 60 * 1000,
-  // });
-  // const tmpPdfPath = "/tmp/input.pdf";
-  // const tmpImagePrefix = "/tmp/preview";
-  // // Download PDF
-  // const res = await fetch(pdfUrl);
-  // if (!res.ok) throw new Error("Failed to download PDF");
-  // const pdfBuffer = await res.buffer();
-  // await fs.writeFile(tmpPdfPath, pdfBuffer);
-  // // Convert first page
-  // await convert(tmpPdfPath, {
-  //   format: "png",
-  //   out_dir: "/tmp",
-  //   out_prefix: "preview",
-  //   page: 1,
-  //   scale: 150,
-  // });
-  // const previewBuffer = await fs.readFile("/tmp/preview-1.png");
-  // const thumbBuffer = await sharp(previewBuffer)
-  //   .resize({ width: 300 })
-  //   .toBuffer();
-  // const dir = path.dirname(storagePath);
-  // const previewPath = `${dir}/preview.png`;
-  // const thumbPath = `${dir}/thumb.png`;
-  // const [previewUrl, thumbnailUrl] = await Promise.all([
-  //   uploadToFirebase(previewBuffer, previewPath),
-  //   uploadToFirebase(thumbBuffer, thumbPath),
-  // ]);
-  // return { previewUrl, thumbnailUrl };
+  const [pdfUrl] = await bucket.file(storagePath).getSignedUrl({
+    action: "read",
+    expires: Date.now() + 15 * 60 * 1000,
+  });
+  const tmpPdfPath = "/tmp/input.pdf";
+  const tmpImagePrefix = "/tmp/preview";
+  // Download PDF
+  const res = await fetch(pdfUrl);
+  if (!res.ok) throw new Error("Failed to download PDF");
+  const pdfBuffer = await res.buffer();
+  await fs.writeFile(tmpPdfPath, pdfBuffer);
+  // Convert first page
+  await convert(tmpPdfPath, {
+    format: "png",
+    out_dir: "/tmp",
+    out_prefix: "preview",
+    page: 1,
+    scale: 150,
+  });
+  const previewBuffer = await fs.readFile("/tmp/preview-1.png");
+  const thumbBuffer = await sharp(previewBuffer)
+    .resize({ width: 300 })
+    .toBuffer();
+  const dir = path.dirname(storagePath);
+  const previewPath = `${dir}/preview.png`;
+  const thumbPath = `${dir}/thumb.png`;
+  const [previewUrl, thumbnailUrl] = await Promise.all([
+    uploadToFirebase(previewBuffer, previewPath),
+    uploadToFirebase(thumbBuffer, thumbPath),
+  ]);
+  return { previewUrl, thumbnailUrl };
 }
 
 async function generateImageThumbnail(storagePath) {
