@@ -124,7 +124,7 @@ const startServer = async () => {
       );
     } else {
       console.log("[POPPLER CHECK] pdftoppm found at:", stdout.trim());
-      exec("pdftoppm -v", (err2, stdout2, stderr2) => {
+      exec("pdftoppm -h", (err2, stdout2, stderr2) => {
         if (err2) {
           console.error(
             "[POPPLER VERSION] Error getting version:",
