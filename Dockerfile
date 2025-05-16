@@ -44,6 +44,9 @@ USER pptruser
 # Now install dependencies
 RUN npm install
 
+# COPY THE REST OF THE APP
+COPY --chown=pptruser:pptruser . .
+
 # Set runtime environment
 ENV PORT=8080
 ENV NODE_ENV=production
