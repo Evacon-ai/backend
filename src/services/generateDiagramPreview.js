@@ -1,7 +1,8 @@
-const { fromBuffer } = require("pdf2pic");
-const sharp = require("sharp");
+const fs = require("fs/promises");
 const path = require("path");
 const fetch = require("node-fetch");
+const { convert } = require("pdf-poppler");
+const sharp = require("sharp");
 const { bucket } = require("../config/firebase");
 const { v4: uuidv4 } = require("uuid");
 
@@ -21,54 +22,43 @@ async function generateDiagramPreview(storagePath) {
 }
 
 async function generatePdfPreview(storagePath) {
-  console.log(`[PREVIEW] Generating preview for: ${storagePath}`);
-
-  // Get signed URL from Firebase Storage
   const [pdfUrl] = await bucket.file(storagePath).getSignedUrl({
     action: "read",
     expires: Date.now() + 15 * 60 * 1000,
   });
 
-  // Download PDF as buffer
-  const res = await fetch(pdfUrl);
-  if (!res.ok) throw new Error(`Failed to fetch PDF: ${res.statusText}`);
-  const pdfBuffer = await res.buffer();
+  const tmpPdfPath = "/tmp/input.pdf";
+  const tmpImagePrefix = "/tmp/preview";
 
-  console.log(`[DEBUG] const converter = fromBuffer(pdfBuffer`);
-  // Convert first page to image using pdf2pic
-  const converter = fromBuffer(pdfBuffer, {
-    density: 150,
+  // Download PDF
+  const res = await fetch(pdfUrl);
+  if (!res.ok) throw new Error("Failed to download PDF");
+  const pdfBuffer = await res.buffer();
+  await fs.writeFile(tmpPdfPath, pdfBuffer);
+
+  // Convert first page
+  await convert(tmpPdfPath, {
     format: "png",
-    width: 1200,
-    height: 1600,
-    savePath: "/tmp", // optional if you want to save
-    saveFilename: "preview",
-    converter: "pdftoppm",
-    converterPath: "/usr/bin/pdftoppm", // set this explicitly
+    out_dir: "/tmp",
+    out_prefix: "preview",
+    page: 1,
+    scale: 150,
   });
 
-  console.log(`[PREVIEW] Rendering first page...`);
-  const result = await converter(1); // first page
-  const previewBuffer = Buffer.from(result.base64, "base64");
-
-  if (!previewBuffer) throw new Error("Failed to generate preview image.");
-
-  // Generate thumbnail with sharp
+  const previewBuffer = await fs.readFile("/tmp/preview-1.png");
   const thumbBuffer = await sharp(previewBuffer)
-    .resize({ width: 300 }) // thumbnail width
+    .resize({ width: 300 })
     .toBuffer();
 
   const dir = path.dirname(storagePath);
   const previewPath = `${dir}/preview.png`;
   const thumbPath = `${dir}/thumb.png`;
 
-  console.log(`[PREVIEW] Uploading images...`);
   const [previewUrl, thumbnailUrl] = await Promise.all([
     uploadToFirebase(previewBuffer, previewPath),
     uploadToFirebase(thumbBuffer, thumbPath),
   ]);
 
-  console.log(`[PREVIEW] Done.`);
   return { previewUrl, thumbnailUrl };
 }
 
