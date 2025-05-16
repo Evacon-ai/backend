@@ -16,7 +16,7 @@
     "helmet": "^7.1.0",
     "morgan": "^1.10.0",
     "node-fetch": "^2.7.0",
-    "pdf-poppler": "^0.2.1",
+    "node-poppler": "^8.0.1",
     "secure-random-password": "^0.2.3",
     "sharp": "^0.34.1",
     "uuid": "^11.1.0"

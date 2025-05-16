@@ -1,9 +1,11 @@
+const { Poppler } = require("node-poppler");
 const fs = require("fs/promises");
 const path = require("path");
-const fetch = require("node-fetch");
 const sharp = require("sharp");
 const { bucket } = require("../config/firebase");
 const { v4: uuidv4 } = require("uuid");
+
+const poppler = new Poppler();
 
 /**
  * Determines how to generate a preview based on the file type.
@@ -21,23 +23,18 @@ async function generateDiagramPreview(storagePath) {
 }
 
 async function generatePdfPreview(storagePath) {
-  let convert;
   console.log("[PDF PREVIEW] Generating preview for PDF:", storagePath);
-  try {
-    ({ convert } = require("pdf-poppler"));
-    console.log("[PDF PREVIEW] { convert } = require(pdf-poppler)");
-  } catch (err) {
-    console.log("[PDF PREVIEW] Failed to load pdf-poppler:", err.message);
-    console.error("[PDF PREVIEW] Failed to load pdf-poppler:", err.message);
-    throw err;
-  }
+  const inputPath = "/tmp/input.pdf";
+  const outputPath = "/tmp/preview.png";
+
+  // Save downloaded PDF to /tmp/input.pdf
   const [pdfUrl] = await bucket.file(storagePath).getSignedUrl({
     action: "read",
     expires: Date.now() + 15 * 60 * 1000,
   });
+
   console.log("[PDF PREVIEW] ----1----");
-  const tmpPdfPath = "/tmp/input.pdf";
-  const tmpImagePrefix = "/tmp/preview";
+
   // Download PDF
   const res = await fetch(pdfUrl);
   console.log("[PDF PREVIEW] ----2----");
@@ -47,16 +44,17 @@ async function generatePdfPreview(storagePath) {
   console.log("[PDF PREVIEW] ----4----");
   await fs.writeFile(tmpPdfPath, pdfBuffer);
   console.log("[PDF PREVIEW] ----5----");
-  // Convert first page
-  await convert(tmpPdfPath, {
-    format: "png",
-    out_dir: "/tmp",
-    out_prefix: "preview",
-    page: 1,
-    scale: 150,
+  // Convert the first page using pdftoppm
+  await poppler.pdfToCairo(inputPath, outputPath.replace(".png", ""), {
+    pngFile: true,
+    singleFile: true,
+    firstPageToConvert: 1,
+    lastPageToConvert: 1,
+    resolutionXAxis: 150,
+    resolutionYAxis: 150,
   });
   console.log("[PDF PREVIEW] ----6----");
-  const previewBuffer = await fs.readFile("/tmp/preview-1.png");
+  const previewBuffer = await fs.readFile(outputPath);
   console.log("[PDF PREVIEW] ----7----");
   const thumbBuffer = await sharp(previewBuffer)
     .resize({ width: 300 })
