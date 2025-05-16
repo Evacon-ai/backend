@@ -33,14 +33,11 @@ async function generatePdfPreview(storagePath) {
     expires: Date.now() + 15 * 60 * 1000,
   });
 
-  console.log("[PDF PREVIEW] ----1----");
-
   // Download PDF
   const res = await fetch(pdfUrl);
-  console.log("[PDF PREVIEW] ----2----");
   if (!res.ok) throw new Error("Failed to download PDF");
-  console.log("[PDF PREVIEW] ----3----");
-  const pdfBuffer = await res.buffer();
+
+  const pdfBuffer = Buffer.from(await res.arrayBuffer());
   console.log("[PDF PREVIEW] ----4----");
   await fs.writeFile(tmpPdfPath, pdfBuffer);
   console.log("[PDF PREVIEW] ----5----");
