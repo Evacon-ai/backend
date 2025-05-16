@@ -114,6 +114,29 @@ const startServer = async () => {
     );
   }
 
+  // Poppler check
+  const { exec } = require("child_process");
+  exec("which pdftoppm", (err, stdout, stderr) => {
+    if (err) {
+      console.error(
+        "[POPPLER CHECK] pdftoppm not found:",
+        stderr || err.message
+      );
+    } else {
+      console.log("[POPPLER CHECK] pdftoppm found at:", stdout.trim());
+      exec("pdftoppm -v", (err2, stdout2, stderr2) => {
+        if (err2) {
+          console.error(
+            "[POPPLER VERSION] Error getting version:",
+            stderr2 || err2.message
+          );
+        } else {
+          console.log("[POPPLER VERSION]", stdout2.trim());
+        }
+      });
+    }
+  });
+
   app.listen(port, () => {
     console.log(`🚀 Server running on http://localhost:${port}`);
     console.log(`📊 Health check available at http://localhost:${port}/health`);
