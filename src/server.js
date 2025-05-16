@@ -124,14 +124,16 @@ const startServer = async () => {
       );
     } else {
       console.log("[POPPLER CHECK] pdftoppm found at:", stdout.trim());
-      exec("pdftoppm -h", (err2, stdout2, stderr2) => {
-        if (err2) {
+      exec("pdftoppm -v", (err, stdout, stderr) => {
+        const output = stdout || stderr;
+        if (err && !output) {
           console.error(
-            "[POPPLER VERSION] Error getting version:",
-            stderr2 || err2.message
+            "[POPPLER VERSION] Failed to get version:",
+            err.message
           );
         } else {
-          console.log("[POPPLER VERSION]", stdout2.trim());
+          const versionLine = output.split("\n")[0];
+          console.log("[POPPLER VERSION]", versionLine.trim());
         }
       });
     }
