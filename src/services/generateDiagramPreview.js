@@ -34,21 +34,22 @@ async function generatePdfPreview(storagePath) {
   if (!res.ok) throw new Error(`Failed to fetch PDF: ${res.statusText}`);
   const pdfBuffer = await res.buffer();
 
+  console.log(`[DEBUG] const converter = fromBuffer(pdfBuffer`);
   // Convert first page to image using pdf2pic
   const converter = fromBuffer(pdfBuffer, {
-    density: 150, // controls image quality
+    density: 150,
     format: "png",
-    width: 1200, // scale up for better resolution
+    width: 1200,
     height: 1600,
+    savePath: "/tmp", // optional if you want to save
+    saveFilename: "preview",
+    converter: "pdftoppm",
+    converterPath: "/usr/bin/pdftoppm", // set this explicitly
   });
 
   console.log(`[PREVIEW] Rendering first page...`);
   const result = await converter(1); // first page
-  const previewBuffer = result.base64
-    ? Buffer.from(result.base64, "base64")
-    : result.path
-    ? await fs.promises.readFile(result.path)
-    : null;
+  const previewBuffer = Buffer.from(result.base64, "base64");
 
   if (!previewBuffer) throw new Error("Failed to generate preview image.");
 
