@@ -16,7 +16,7 @@ async function extractElementsFromDiagram(diagramUrl) {
 
   const storage = new Storage({
     projectId: "evacon-ai-565c5",
-    keyFilename: serviceAccount,
+    credentials: serviceAccount,
   });
 
   const filePath = extractFirebaseStoragePath(diagramUrl);
