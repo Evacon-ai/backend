@@ -38,9 +38,9 @@ async function generatePdfPreview(storagePath) {
   if (!res.ok) throw new Error("Failed to download PDF");
 
   const pdfBuffer = Buffer.from(await res.arrayBuffer());
-  console.log("[PDF PREVIEW] ----4----");
+
   await fs.writeFile(inputPath, pdfBuffer);
-  console.log("[PDF PREVIEW] ----5----");
+
   // Convert the first page using pdftoppm
   await poppler.pdfToCairo(inputPath, outputPath.replace(".png", ""), {
     pngFile: true,
@@ -50,13 +50,13 @@ async function generatePdfPreview(storagePath) {
     resolutionXAxis: 150,
     resolutionYAxis: 150,
   });
-  console.log("[PDF PREVIEW] ----6----");
+
   const previewBuffer = await fs.readFile(outputPath);
-  console.log("[PDF PREVIEW] ----7----");
+
   const thumbBuffer = await sharp(previewBuffer)
     .resize({ width: 300 })
     .toBuffer();
-  console.log("[PDF PREVIEW] ----8----");
+
   const dir = path.dirname(storagePath);
   const previewPath = `${dir}/preview.png`;
   const thumbPath = `${dir}/thumb.png`;
@@ -64,7 +64,7 @@ async function generatePdfPreview(storagePath) {
     uploadToFirebase(previewBuffer, previewPath),
     uploadToFirebase(thumbBuffer, thumbPath),
   ]);
-  console.log("[PDF PREVIEW] ----9----");
+
   return { previewUrl, thumbnailUrl };
 }
 
