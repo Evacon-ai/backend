@@ -31,15 +31,17 @@ async function extractElementsFromDiagram(diagramUrl) {
 
   // console.log("Signed URL:", url);
 
+  console.log("[DEBUG] Extracted URL:", diagramUrl);
   try {
     const response = await axios.post(
       "https://evacon-extractor-754396764509.us-central1.run.app/extract_ic",
       { url: diagramUrl },
       { timeout: 10000 }
     );
-
+    console.log("[DEBUG] response: ", response.data);
     return response.data;
   } catch (error) {
+    console.log("[DEBUG] response: ", error);
     if (error.code === "ECONNABORTED") {
       const timeoutError = new Error("Extractor service timed out");
       timeoutError.statusCode = 504;
