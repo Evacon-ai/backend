@@ -84,7 +84,7 @@ async function generateImageThumbnail(storagePath) {
   const dir = path.dirname(storagePath);
   const thumbPath = `${dir}/thumb.png`;
 
-  const previewUrl = await uploadToFirebase(imageBuffer, thumbPath);
+  const previewUrl = storagePath;
   const thumbnailUrl = await uploadToFirebase(thumbBuffer, thumbPath);
 
   return {
