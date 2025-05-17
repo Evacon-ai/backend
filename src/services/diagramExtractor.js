@@ -20,7 +20,7 @@ async function extractElementsFromDiagram(diagramUrl) {
   });
 
   const filePath = extractFirebaseStoragePath(diagramUrl);
-
+  console.log("[DEBUG] Extracted URL:", filePath);
   const [url] = await storage
     .bucket("evacon-ai-565c5.appspot.com")
     .file(filePath)
