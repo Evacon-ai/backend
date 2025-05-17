@@ -81,11 +81,14 @@ async function generateImageThumbnail(storagePath) {
     .resize({ width: 300 })
     .toBuffer();
 
+  const previewBuffer = await sharp(imageBuffer).toBuffer();
+
   const dir = path.dirname(storagePath);
   const thumbPath = `${dir}/thumb.png`;
+  const previewPath = `${dir}/preview.png`;
 
-  const previewUrl = storagePath;
   const thumbnailUrl = await uploadToFirebase(thumbBuffer, thumbPath);
+  const previewUrl = await uploadToFirebase(previewBuffer, previewPath);
 
   return {
     previewUrl,
