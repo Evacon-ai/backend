@@ -8,33 +8,33 @@ async function extractElementsFromDiagram(diagramUrl) {
 
   // Generate signed URL for the diagram
 
-  var serviceAccount;
-  if (process.env.STORAGE_SECRET)
-    serviceAccount = JSON.parse(process.env.STORAGE_SECRET);
-  else
-    serviceAccount = require("../config/secret/evacon-ai-565c5-d4e3a89d59d4.json");
+  // var serviceAccount;
+  // if (process.env.STORAGE_SECRET)
+  //   serviceAccount = JSON.parse(process.env.STORAGE_SECRET);
+  // else
+  //   serviceAccount = require("../config/secret/evacon-ai-565c5-d4e3a89d59d4.json");
 
-  const storage = new Storage({
-    projectId: "evacon-ai-565c5",
-    credentials: serviceAccount,
-  });
+  // const storage = new Storage({
+  //   projectId: "evacon-ai-565c5",
+  //   credentials: serviceAccount,
+  // });
 
-  const filePath = extractFirebaseStoragePath(diagramUrl);
-  console.log("[DEBUG] Extracted URL:", filePath);
-  const [url] = await storage
-    .bucket("evacon-ai-565c5.appspot.com")
-    .file(filePath)
-    .getSignedUrl({
-      action: "read",
-      expires: Date.now() + 15 * 60 * 1000, // 15 min
-    });
+  // const filePath = extractFirebaseStoragePath(diagramUrl);
+  // console.log("[DEBUG] Extracted URL:", filePath);
+  // const [url] = await storage
+  //   .bucket("evacon-ai-565c5.appspot.com")
+  //   .file(filePath)
+  //   .getSignedUrl({
+  //     action: "read",
+  //     expires: Date.now() + 15 * 60 * 1000, // 15 min
+  //   });
 
-  console.log("Signed URL:", url);
+  // console.log("Signed URL:", url);
 
   try {
     const response = await axios.post(
       "https://evacon-extractor-754396764509.us-central1.run.app/extract_ic",
-      { url: url },
+      { url: diagramUrl },
       { timeout: 10000 }
     );
 

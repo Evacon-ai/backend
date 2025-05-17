@@ -84,34 +84,11 @@ async function generateImageThumbnail(storagePath) {
   const dir = path.dirname(storagePath);
   const thumbPath = `${dir}/thumb.png`;
 
+  const previewUrl = await uploadToFirebase(imageBuffer, thumbPath);
   const thumbnailUrl = await uploadToFirebase(thumbBuffer, thumbPath);
 
   return {
-    previewUrl: downloadUrl, // original image stays as-is
-    thumbnailUrl,
-  };
-}
-
-async function generateImageThumbnail(storagePath) {
-  const [downloadUrl] = await bucket.file(storagePath).getSignedUrl({
-    action: "read",
-    expires: Date.now() + 15 * 60 * 1000,
-  });
-
-  const response = await fetch(downloadUrl);
-  const imageBuffer = await response.arrayBuffer();
-
-  const thumbBuffer = await sharp(Buffer.from(imageBuffer))
-    .resize({ width: 300 })
-    .toBuffer();
-
-  const dir = path.dirname(storagePath);
-  const thumbPath = `${dir}/thumb.png`;
-
-  const thumbnailUrl = await uploadToFirebase(thumbBuffer, thumbPath);
-
-  return {
-    previewUrl: downloadUrl, // original image
+    previewUrl,
     thumbnailUrl,
   };
 }
