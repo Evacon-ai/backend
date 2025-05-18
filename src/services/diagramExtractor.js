@@ -33,9 +33,14 @@ async function extractElementsFromDiagram(diagramUrl) {
 
   console.log("[DEBUG] Extracted URL:", diagramUrl);
   try {
+    const apiPath =
+      process.env.AI_API_SERVICE_URL ||
+      "https://evacon-ai-engine-avhvd7ewgmdeehhd.westus2-01.azurewebsites.net";
+    //"https://evacon-extractor-754396764509.us-central1.run.app";
+
     const response = await axios.post(
-      "https://evacon-extractor-754396764509.us-central1.run.app/extract_ic",
-      { url: diagramUrl },
+      `${apiPath}/extract_ic`,
+      { url: diagramUrl, gen_ic_list: true },
       { timeout: 10000 }
     );
     console.log("[DEBUG] response: ", response.data);
