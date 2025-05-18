@@ -51,17 +51,24 @@ const getLogById = async (req, res) => {
 
 const createLog = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { action } = req.body;
 
-    if (!name) {
-      return res.status(400).json({ error: "Log name is required" });
+    if (!action) {
+      return res.status(400).json({ error: "Log action is required" });
     }
 
     const newLog = {
-      name,
+      action: req.body.action,
+      entity_type: req.body.entity_type || null,
+      entity_id: req.body.entity_id || null,
+      details: req.body.details || {},
       created_at: admin.firestore.FieldValue.serverTimestamp(),
       created_by: req.user.uid,
-      meta,
+      user: {
+        first_name: req.user.first_name || null,
+        last_name: req.user.last_name || null,
+        email: req.user.email || null,
+      },
     };
 
     const docRef = await db.collection("logs").add(newLog);
