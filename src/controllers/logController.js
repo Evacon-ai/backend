@@ -65,8 +65,8 @@ const createLog = async (req, res) => {
       created_at: admin.firestore.FieldValue.serverTimestamp(),
       created_by: req.user.uid,
       user: {
-        first_name: req.user.first_name || null,
-        last_name: req.user.last_name || null,
+        first_name: req.body.user_first_name || null,
+        last_name: req.body.user_last_name || null,
         email: req.user.email || null,
       },
     };
