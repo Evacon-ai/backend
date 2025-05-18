@@ -40,8 +40,8 @@ async function extractElementsFromDiagram(diagramUrl) {
 
     const response = await axios.post(
       `${apiPath}/extract_ic`,
-      { url: diagramUrl, gen_ic_list: true },
-      { timeout: 10000 }
+      { file: "", url: diagramUrl, gen_ic_list: true },
+      { timeout: 60000 }
     );
     console.log("[DEBUG] response: ", response.data);
     return response.data;
