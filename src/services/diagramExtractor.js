@@ -1,4 +1,6 @@
 const axios = require("../utils/axios");
+import FormData from "form-data";
+
 const { Storage } = require("@google-cloud/storage");
 
 async function extractElementsFromDiagram(diagramUrl) {
@@ -35,14 +37,16 @@ async function extractElementsFromDiagram(diagramUrl) {
   try {
     const apiPath =
       process.env.AI_API_SERVICE_URL ||
-      "https://evacon-ai-engine-avhvd7ewgmdeehhd.westus2-01.azurewebsites.net";
-    //"https://evacon-extractor-754396764509.us-central1.run.app";
+      "https://evacon-extractor-754396764509.us-central1.run.app";
 
-    const response = await axios.post(
-      `${apiPath}/extract_ic`,
-      { url: diagramUrl, gen_ic_list: true },
-      { timeout: 60000 }
-    );
+    const form = new FormData();
+    form.append("url", diagramUrl);
+    form.append("gen_ic_list", "true");
+
+    const response = await axios.post(`${apiPath}/extract_ic`, form, {
+      timeout: 60000,
+      headers: form.getHeaders(), // this sets the correct multipart/form-data headers
+    });
     console.log("[DEBUG] response: ", response.data);
     return response.data;
   } catch (error) {
