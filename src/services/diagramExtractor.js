@@ -1,5 +1,5 @@
 const axios = require("../utils/axios");
-import FormData from "form-data";
+const FormData = require("form-data");
 
 const { Storage } = require("@google-cloud/storage");
 
