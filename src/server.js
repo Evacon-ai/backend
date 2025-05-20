@@ -10,6 +10,7 @@ const userRoutes = require("./routes/userRoutes");
 const organizationRoutes = require("./routes/organizationRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const logsRoutes = require("./routes/logsRoutes");
+const jobsRoutes = require("./routes/jobsRoutes");
 
 const app = express();
 const port = process.env.PORT || 3000; // Local dev defaults to 3000
@@ -51,7 +52,7 @@ app.use("/api/projects", projectRoutes);
 // Mount logs routes
 app.use("/api/logs", logsRoutes);
 // Mount jobs routes
-app.use("/api/jobs", logsRoutes);
+app.use("/api/jobs", jobsRoutes);
 
 // API routes will be mounted here
 app.use("/api", (req, res) => {
