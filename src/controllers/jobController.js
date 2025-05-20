@@ -34,7 +34,7 @@ const getJobById = async (req, res) => {
 const createJob = async (req, res) => {
   try {
     const { type, payload } = req.body;
-
+    console.log("Creating job with type:", type, "and payload:", payload);
     if (!type) {
       return res.status(400).json({ error: "Job type is required" });
     }
