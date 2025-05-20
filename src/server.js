@@ -9,8 +9,8 @@ const { testConnection } = require("./config/firebase");
 const userRoutes = require("./routes/userRoutes");
 const organizationRoutes = require("./routes/organizationRoutes");
 const projectRoutes = require("./routes/projectRoutes");
-const logsRoutes = require("./routes/logsRoutes");
-const jobsRoutes = require("./routes/jobsRoutes");
+const logsRoutes = require("./routes/logRoutes");
+const jobsRoutes = require("./routes/jobRoutes");
 
 const app = express();
 const port = process.env.PORT || 3000; // Local dev defaults to 3000
