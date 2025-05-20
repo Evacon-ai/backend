@@ -50,6 +50,8 @@ app.use("/api/organizations", organizationRoutes);
 app.use("/api/projects", projectRoutes);
 // Mount logs routes
 app.use("/api/logs", logsRoutes);
+// Mount jobs routes
+app.use("/api/jobs", logsRoutes);
 
 // API routes will be mounted here
 app.use("/api", (req, res) => {
