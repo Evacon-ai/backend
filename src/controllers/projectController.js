@@ -237,8 +237,8 @@ const updateDiagram = async (req, res) => {
               const { previewUrl, thumbnailUrl } = await generateDiagramPreview(
                 storagePath
               );
-              updates.previewUrl = previewUrl;
-              updates.thumbnailUrl = thumbnailUrl;
+              updates.preview_url = previewUrl;
+              updates.thumbnail_url = thumbnailUrl;
               updates.error = "Preview successfully generated";
             } catch (err) {
               console.warn("Preview generation failed:", err.message);
