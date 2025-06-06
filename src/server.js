@@ -3,6 +3,8 @@ const path = require("path");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const WebSocket = require("ws");
+const http = require("http");
 require("dotenv").config();
 
 const { testConnection } = require("./config/firebase");
@@ -14,6 +16,41 @@ const jobRoutes = require("./routes/jobRoutes");
 
 const app = express();
 const port = process.env.PORT || 3000; // Local dev defaults to 3000
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+// Store connected clients with their organization IDs
+const clients = new Map();
+
+wss.on("connection", (ws, req) => {
+  console.log("New WebSocket connection");
+
+  ws.on("message", (message) => {
+    try {
+      const data = JSON.parse(message);
+      if (data.type === "subscribe") {
+        if (data.isAdmin) {
+          // Admin subscribes to all updates
+          clients.set(ws, "*");
+          console.log("Admin subscribed to all organizations");
+        } else if (data.organizationId) {
+          // Regular user subscribes to specific organization
+          clients.set(ws, data.organizationId);
+          console.log(
+            `Client subscribed to organization: ${data.organizationId}`
+          );
+        }
+      }
+    } catch (error) {
+      console.error("WebSocket message error:", error);
+    }
+  });
+
+  ws.on("close", () => {
+    clients.delete(ws);
+    console.log("Client disconnected");
+  });
+});
 
 // Middleware
 app.use(helmet()); // Security headers
@@ -110,6 +147,18 @@ app.use((req, res) => {
   res.status(404).json({ error: "Not Found" });
 });
 
+// Export WebSocket broadcast function
+const broadcastToOrganization = (organizationId, data) => {
+  clients.forEach((clientOrgId, client) => {
+    if (
+      (clientOrgId === "*" || clientOrgId === organizationId) &&
+      client.readyState === WebSocket.OPEN
+    ) {
+      client.send(JSON.stringify(data));
+    }
+  });
+};
+
 // Start server and initialize Firebase connection
 const startServer = async () => {
   // Test Firebase connection before starting the server
@@ -120,10 +169,12 @@ const startServer = async () => {
     );
   }
 
-  app.listen(port, () => {
+  server.listen(port, () => {
     console.log(`🚀 Server running on http://localhost:${port}`);
     console.log(`📊 Health check available at http://localhost:${port}/health`);
   });
 };
 
 startServer();
+
+module.exports = { broadcastToOrganization };

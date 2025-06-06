@@ -1,5 +1,6 @@
 const { db, admin } = require("../config/firebase");
 const { publishMessage } = require("../middleware/pubsub");
+const { broadcastToOrganization } = require("../server");
 
 const getAllJobs = async (req, res) => {
   try {
@@ -114,6 +115,16 @@ const updateJob = async (req, res) => {
     await db.collection("jobs").doc(id).update(updates);
 
     const updatedDoc = await db.collection("jobs").doc(id).get();
+    const updatedJob = { id: updatedDoc.id, ...updatedDoc.data() };
+
+    // Broadcast the update to the organization's WebSocket clients
+    if (updatedJob.organization_id) {
+      broadcastToOrganization(updatedJob.organization_id, {
+        type: "job_update",
+        job: updatedJob,
+      });
+    }
+
     res.json({ id: updatedDoc.id, ...updatedDoc.data() });
   } catch (error) {
     console.error("Error updating job:", error);
