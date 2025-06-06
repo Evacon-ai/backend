@@ -102,6 +102,7 @@ const createJob = async (req, res) => {
         const updatedJob = { id: updatedDoc.id, ...updatedDoc.data() };
 
         // Broadcast the update via WebSocket
+        console.log("[TESTING]: before broadcastToOrganization");
         broadcastToOrganization(organization_id, {
           type: "job_update",
           job: updatedJob,
