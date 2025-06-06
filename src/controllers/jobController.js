@@ -43,6 +43,7 @@ const createJob = async (req, res) => {
       status: "pending",
       type,
       payload,
+      organization_id,
       result: null,
       created_at: admin.firestore.FieldValue.serverTimestamp(),
       created_by: req.user.uid,
