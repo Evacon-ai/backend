@@ -148,18 +148,22 @@ app.use((req, res) => {
 });
 
 // Export WebSocket broadcast function
-// Export WebSocket broadcast function
 const broadcastToOrganization = (organizationId, data) => {
-  console.log("[TESTING]: broadcastToOrganization");
+  console.log(
+    "[TESTING]: broadcastToOrganization called for org:",
+    organizationId
+  );
+  console.log("[TESTING]: Connected clients:", clients.size);
   clients.forEach((clientOrgId, client) => {
     if (
       (clientOrgId === "*" || clientOrgId === organizationId) &&
       client.readyState === WebSocket.OPEN
     ) {
+      console.log("[TESTING]: Sending to client with orgId:", clientOrgId);
       client.send(JSON.stringify(data));
-      console.log("[TESTING]: ", JSON.stringify(data));
     }
   });
+  console.log("[TESTING]: Broadcast complete");
 };
 
 // Start server and initialize Firebase connection
