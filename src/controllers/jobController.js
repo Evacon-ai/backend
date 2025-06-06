@@ -86,6 +86,30 @@ const createJob = async (req, res) => {
 
     res.status(201).json({ id: jobDoc.id, ...jobDoc.data() });
     publishMessage("job-created", { id: jobDoc.id, type: type });
+
+    // Temporary: Simulate job completion after 5 seconds
+    setTimeout(async () => {
+      try {
+        // Update the job status to completed
+        await db.collection("jobs").doc(jobDoc.id).update({
+          status: "completed",
+          updated_at: admin.firestore.FieldValue.serverTimestamp(),
+          updated_by: req.user.uid,
+        });
+
+        // Get the updated job data
+        const updatedDoc = await db.collection("jobs").doc(jobDoc.id).get();
+        const updatedJob = { id: updatedDoc.id, ...updatedDoc.data() };
+
+        // Broadcast the update via WebSocket
+        broadcastToOrganization(organization_id, {
+          type: "job_update",
+          job: updatedJob,
+        });
+      } catch (error) {
+        console.error("Error in job completion simulation:", error);
+      }
+    }, 5000);
   } catch (error) {
     console.error("Error creating job:", error);
     res.status(500).json({ error: "Failed to create job" });
