@@ -22,6 +22,25 @@ const wss = new WebSocket.Server({ server });
 // Store connected clients with their organization IDs
 const clients = new Map();
 
+// WebSocket broadcast function
+const broadcastToOrganization = (organizationId, data) => {
+  console.log(
+    "[TESTING]: broadcastToOrganization called for org:",
+    organizationId
+  );
+  console.log("[TESTING]: Connected clients:", clients.size);
+  clients.forEach((clientOrgId, client) => {
+    if (
+      (clientOrgId === "*" || clientOrgId === organizationId) &&
+      client.readyState === WebSocket.OPEN
+    ) {
+      console.log("[TESTING]: Sending to client with orgId:", clientOrgId);
+      client.send(JSON.stringify(data));
+    }
+  });
+  console.log("[TESTING]: Broadcast complete");
+};
+
 wss.on("connection", (ws, req) => {
   console.log("New WebSocket connection");
 
@@ -146,25 +165,6 @@ app.get("/pdf-proxy", async (req, res) => {
 app.use((req, res) => {
   res.status(404).json({ error: "Not Found" });
 });
-
-// Export WebSocket broadcast function
-const broadcastToOrganization = (organizationId, data) => {
-  console.log(
-    "[TESTING]: broadcastToOrganization called for org:",
-    organizationId
-  );
-  console.log("[TESTING]: Connected clients:", clients.size);
-  clients.forEach((clientOrgId, client) => {
-    if (
-      (clientOrgId === "*" || clientOrgId === organizationId) &&
-      client.readyState === WebSocket.OPEN
-    ) {
-      console.log("[TESTING]: Sending to client with orgId:", clientOrgId);
-      client.send(JSON.stringify(data));
-    }
-  });
-  console.log("[TESTING]: Broadcast complete");
-};
 
 // Start server and initialize Firebase connection
 const startServer = async () => {
