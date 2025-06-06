@@ -31,12 +31,43 @@ const getJobById = async (req, res) => {
   }
 };
 
+const getOrganizationJobs = async (req, res) => {
+  try {
+    const { organizationId } = req.params;
+    const { status } = req.query;
+
+    let query = db
+      .collection("jobs")
+      .where("organization_id", "==", organizationId);
+
+    if (status) {
+      query = query.where("status", "==", status);
+    }
+
+    const jobsSnapshot = await query.get();
+
+    const jobs = [];
+    jobsSnapshot.forEach((doc) => {
+      jobs.push({ id: doc.id, ...doc.data() });
+    });
+
+    res.json(jobs);
+  } catch (error) {
+    console.error("Error getting organization jobs:", error);
+    res.status(500).json({ error: "Failed to retrieve organization jobs" });
+  }
+};
+
 const createJob = async (req, res) => {
   try {
-    const { type, payload } = req.body;
+    const { type, payload, organization_id } = req.body;
 
     if (!type) {
       return res.status(400).json({ error: "Job type is required" });
+    }
+
+    if (!organization_id) {
+      return res.status(400).json({ error: "Organization ID is required" });
     }
 
     const newJob = {
@@ -114,4 +145,5 @@ module.exports = {
   createJob,
   updateJob,
   deleteJob,
+  getOrganizationJobs,
 };

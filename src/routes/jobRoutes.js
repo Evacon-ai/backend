@@ -9,6 +9,7 @@ router.all("*", verifyAuth);
 // Routes that require admin access
 router.get("/", jobController.getAllJobs);
 router.get("/:id", jobController.getJobById);
+router.get("/organization/:organizationId", jobController.getOrganizationJobs);
 router.post("/", jobController.createJob);
 router.put("/:id", jobController.updateJob);
 router.delete("/:id", jobController.deleteJob);
