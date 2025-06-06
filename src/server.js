@@ -150,11 +150,13 @@ app.use((req, res) => {
 // Export WebSocket broadcast function
 const broadcastToOrganization = (organizationId, data) => {
   clients.forEach((clientOrgId, client) => {
+    console.log("[DEBUG]: broadcastToOrganization");
     if (
       (clientOrgId === "*" || clientOrgId === organizationId) &&
       client.readyState === WebSocket.OPEN
     ) {
       client.send(JSON.stringify(data));
+      console.log("[DEBUG]: ", JSON.stringify(data));
     }
   });
 };
