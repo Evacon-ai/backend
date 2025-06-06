@@ -3,10 +3,10 @@ const path = require("path");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const WebSocket = require("ws");
 const http = require("http");
 require("dotenv").config();
 
+const wsService = require("./services/websocketService");
 const { testConnection } = require("./config/firebase");
 const userRoutes = require("./routes/userRoutes");
 const organizationRoutes = require("./routes/organizationRoutes");
@@ -17,59 +17,9 @@ const jobRoutes = require("./routes/jobRoutes");
 const app = express();
 const port = process.env.PORT || 3000; // Local dev defaults to 3000
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
 
-// Store connected clients with their organization IDs
-const clients = new Map();
-
-// WebSocket broadcast function
-const broadcastToOrganization = (organizationId, data) => {
-  console.log(
-    "[TESTING]: broadcastToOrganization called for org:",
-    organizationId
-  );
-  console.log("[TESTING]: Connected clients:", clients.size);
-  clients.forEach((clientOrgId, client) => {
-    if (
-      (clientOrgId === "*" || clientOrgId === organizationId) &&
-      client.readyState === WebSocket.OPEN
-    ) {
-      console.log("[TESTING]: Sending to client with orgId:", clientOrgId);
-      client.send(JSON.stringify(data));
-    }
-  });
-  console.log("[TESTING]: Broadcast complete");
-};
-
-wss.on("connection", (ws, req) => {
-  console.log("New WebSocket connection");
-
-  ws.on("message", (message) => {
-    try {
-      const data = JSON.parse(message);
-      if (data.type === "subscribe") {
-        if (data.isAdmin) {
-          // Admin subscribes to all updates
-          clients.set(ws, "*");
-          console.log("Admin subscribed to all organizations");
-        } else if (data.organizationId) {
-          // Regular user subscribes to specific organization
-          clients.set(ws, data.organizationId);
-          console.log(
-            `Client subscribed to organization: ${data.organizationId}`
-          );
-        }
-      }
-    } catch (error) {
-      console.error("WebSocket message error:", error);
-    }
-  });
-
-  ws.on("close", () => {
-    clients.delete(ws);
-    console.log("Client disconnected");
-  });
-});
+// Initialize WebSocket service
+wsService.initialize(server);
 
 // Middleware
 app.use(helmet()); // Security headers
@@ -183,5 +133,3 @@ const startServer = async () => {
 };
 
 startServer();
-
-module.exports = { broadcastToOrganization };

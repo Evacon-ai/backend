@@ -1,6 +1,6 @@
 const { db, admin } = require("../config/firebase");
 const { publishMessage } = require("../middleware/pubsub");
-const { broadcastToOrganization } = require("../server");
+const wsService = require("../services/websocketService");
 
 const getAllJobs = async (req, res) => {
   try {
@@ -102,8 +102,7 @@ const createJob = async (req, res) => {
         const updatedJob = { id: updatedDoc.id, ...updatedDoc.data() };
 
         // Broadcast the update via WebSocket
-        console.log("[TESTING]: before broadcastToOrganization");
-        broadcastToOrganization(organization_id, {
+        wsService.broadcastToOrganization(organization_id, {
           type: "job_update",
           job: updatedJob,
         });
@@ -144,7 +143,7 @@ const updateJob = async (req, res) => {
 
     // Broadcast the update to the organization's WebSocket clients
     if (updatedJob.organization_id) {
-      broadcastToOrganization(updatedJob.organization_id, {
+      wsService.broadcastToOrganization(updatedJob.organization_id, {
         type: "job_update",
         job: updatedJob,
       });
