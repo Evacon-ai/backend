@@ -1,8 +1,7 @@
 const { db, admin } = require("../config/firebase");
-const { extractElementsFromDiagram } = require("../services/diagramExtractor");
 const {
   generateDiagramPreview,
-} = require("../services/generateDiagramPreview");
+} = require("../services/diagramPreviewGeneratorService");
 const path = require("path");
 
 const getAllProjects = async (req, res) => {
@@ -307,66 +306,66 @@ const deleteDiagram = async (req, res) => {
   }
 };
 
-const getDiagramDataExtract = async (req, res) => {
-  try {
-    const { projectId, diagramId } = req.params;
-    const diagramDoc = await db
-      .collection("projects")
-      .doc(projectId)
-      .collection("diagrams")
-      .doc(diagramId)
-      .get();
+// const getDiagramDataExtract = async (req, res) => {
+//   try {
+//     const { projectId, diagramId } = req.params;
+//     const diagramDoc = await db
+//       .collection("projects")
+//       .doc(projectId)
+//       .collection("diagrams")
+//       .doc(diagramId)
+//       .get();
 
-    if (!diagramDoc.exists) {
-      return res.status(404).json({ error: "Diagram not found" });
-    }
-    const diagramData = diagramDoc.data();
+//     if (!diagramDoc.exists) {
+//       return res.status(404).json({ error: "Diagram not found" });
+//     }
+//     const diagramData = diagramDoc.data();
 
-    try {
-      // Make request to AI API
+//     try {
+//       // Make request to AI API
 
-      if (!diagramData?.url) {
-        return res.status(400).json({ error: "Missing diagram URL" });
-      }
+//       if (!diagramData?.url) {
+//         return res.status(400).json({ error: "Missing diagram URL" });
+//       }
 
-      const response = await extractElementsFromDiagram(diagramData.previewUrl);
-      const elements = response || [];
+//       const response = await extractElementsFromDiagram(diagramData.previewUrl);
+//       const elements = response || [];
 
-      // Save received extracted data in DB
-      const updates = {
-        ...(elements !== undefined && { elements }),
-        updated_at: admin.firestore.FieldValue.serverTimestamp(),
-        updated_by: req.user.uid,
-      };
+//       // Save received extracted data in DB
+//       const updates = {
+//         ...(elements !== undefined && { elements }),
+//         updated_at: admin.firestore.FieldValue.serverTimestamp(),
+//         updated_by: req.user.uid,
+//       };
 
-      await db
-        .collection("projects")
-        .doc(projectId)
-        .collection("diagrams")
-        .doc(diagramId)
-        .update(updates);
-      const updatedDoc = await db
-        .collection("projects")
-        .doc(projectId)
-        .collection("diagrams")
-        .doc(diagramId)
-        .get();
+//       await db
+//         .collection("projects")
+//         .doc(projectId)
+//         .collection("diagrams")
+//         .doc(diagramId)
+//         .update(updates);
+//       const updatedDoc = await db
+//         .collection("projects")
+//         .doc(projectId)
+//         .collection("diagrams")
+//         .doc(diagramId)
+//         .get();
 
-      // Send responce back (full diagram object)
-      res.json({ id: updatedDoc.id, ...updatedDoc.data() });
-    } catch (error) {
-      console.error("Error processing diagram with AI:", error);
-      res.status(500).json({
-        error_message: "Failed to process diagram with AI",
-        error,
-        url: diagramData.url,
-      });
-    }
-  } catch (error) {
-    console.error("Error getting diagram:", error);
-    res.status(500).json({ error: "Failed to retrieve diagram" });
-  }
-};
+//       // Send responce back (full diagram object)
+//       res.json({ id: updatedDoc.id, ...updatedDoc.data() });
+//     } catch (error) {
+//       console.error("Error processing diagram with AI:", error);
+//       res.status(500).json({
+//         error_message: "Failed to process diagram with AI",
+//         error,
+//         url: diagramData.url,
+//       });
+//     }
+//   } catch (error) {
+//     console.error("Error getting diagram:", error);
+//     res.status(500).json({ error: "Failed to retrieve diagram" });
+//   }
+// };
 
 module.exports = {
   getAllProjects,
@@ -379,5 +378,4 @@ module.exports = {
   createDiagram,
   updateDiagram,
   deleteDiagram,
-  getDiagramDataExtract,
 };

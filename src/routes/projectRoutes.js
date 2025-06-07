@@ -23,9 +23,4 @@ router.delete(
   projectController.deleteDiagram
 );
 
-router.get(
-  "/:projectId/diagrams/:diagramId/extract",
-  projectController.getDiagramDataExtract
-);
-
 module.exports = router;

@@ -1,6 +1,6 @@
 const { db, admin } = require("../config/firebase");
-const { publishMessage } = require("../middleware/pubsub");
 const wsService = require("../services/websocketService");
+const { enqueueJob } = require("../services/cloudTasksService");
 
 const getAllJobs = async (req, res) => {
   try {
@@ -85,31 +85,116 @@ const createJob = async (req, res) => {
     const jobDoc = await docRef.get();
 
     res.status(201).json({ id: jobDoc.id, ...jobDoc.data() });
-    publishMessage("job-created", { id: jobDoc.id, type: type });
 
-    // Temporary: Simulate job completion after 5 seconds
-    setTimeout(async () => {
-      try {
-        // Update the job status to completed
-        await db.collection("jobs").doc(jobDoc.id).update({
-          status: "completed",
+    // Process job based on type
+    let queuePayload = payload;
+
+    switch (type) {
+      case "diagram_elements_extraction":
+        try {
+          // Extract project_id and diagram_id from payload
+          const { project_id, diagram_id } = payload;
+
+          if (!project_id || !diagram_id) {
+            throw new Error(
+              "project_id and diagram_id are required for diagram_elements_extraction jobs"
+            );
+          }
+
+          // Get the diagram document to extract preview_url
+          const diagramDoc = await db
+            .collection("projects")
+            .doc(project_id)
+            .collection("diagrams")
+            .doc(diagram_id)
+            .get();
+
+          if (!diagramDoc.exists) {
+            throw new Error("Diagram not found");
+          }
+
+          const diagramData = diagramDoc.data();
+
+          if (!diagramData.previewUrl) {
+            throw new Error("Diagram preview URL not found");
+          }
+
+          // Build queue payload with preview_url
+          queuePayload = {
+            ...payload,
+            preview_url: diagramData.previewUrl,
+          };
+
+          console.log(
+            `[Job ${jobId}] Extracted preview URL for diagram extraction:`,
+            diagramData.previewUrl
+          );
+        } catch (error) {
+          console.error(
+            `[Job ${jobId}] Error preparing diagram extraction job:`,
+            error.message
+          );
+
+          // Update job status to failed
+          await db.collection("jobs").doc(jobId).update({
+            status: "failed",
+            error: error.message,
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          // Broadcast the failure
+          const failedJob = {
+            id: jobId,
+            ...newJob,
+            status: "failed",
+            error: error.message,
+          };
+          wsService.broadcastToOrganization(organization_id, {
+            type: "job_update",
+            job: failedJob,
+          });
+
+          return; // Don't enqueue the job
+        }
+        break;
+
+      default:
+        // For other job types, use the original payload
+        console.log(
+          `[Job ${jobId}] Using original payload for job type: ${type}`
+        );
+        break;
+    }
+
+    // Enqueue the job with the processed payload
+    try {
+      await enqueueJob({ jobId, jobType: type, payload: queuePayload });
+      console.log(`[Job ${jobId}] Successfully enqueued job of type: ${type}`);
+    } catch (err) {
+      console.warn(`[Job ${jobId}] Job queueing failed:`, err.message);
+
+      // Update job status to indicate queueing failure
+      await db
+        .collection("jobs")
+        .doc(jobId)
+        .update({
+          status: "failed",
+          error: `Failed to enqueue job: ${err.message}`,
           updated_at: admin.firestore.FieldValue.serverTimestamp(),
-          updated_by: req.user.uid,
         });
 
-        // Get the updated job data
-        const updatedDoc = await db.collection("jobs").doc(jobDoc.id).get();
-        const updatedJob = { id: updatedDoc.id, ...updatedDoc.data() };
-
-        // Broadcast the update via WebSocket
-        wsService.broadcastToOrganization(organization_id, {
-          type: "job_update",
-          job: updatedJob,
-        });
-      } catch (error) {
-        console.error("Error in job completion simulation:", error);
-      }
-    }, 5000);
+      // Broadcast the failure
+      const failedJob = {
+        id: jobId,
+        ...newJob,
+        status: "failed",
+        error: `Failed to enqueue job: ${err.message}`,
+      };
+      wsService.broadcastToOrganization(organization_id, {
+        type: "job_update",
+        job: failedJob,
+      });
+    }
   } catch (error) {
     console.error("Error creating job:", error);
     res.status(500).json({ error: "Failed to create job" });
@@ -174,6 +259,90 @@ const deleteJob = async (req, res) => {
   }
 };
 
+const jobCallback = async (req, res) => {
+  try {
+    const { jobId, status, result, error } = req.body;
+
+    if (!jobId) {
+      return res.status(400).json({ error: "Job ID is required" });
+    }
+
+    if (!status) {
+      return res.status(400).json({ error: "Status is required" });
+    }
+
+    // Validate status
+    const validStatuses = [
+      "pending",
+      "processing",
+      "completed",
+      "failed",
+      "aborted",
+    ];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        error: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+      });
+    }
+
+    // Get the job document
+    const jobDoc = await db.collection("jobs").doc(jobId).get();
+
+    if (!jobDoc.exists) {
+      return res.status(404).json({ error: "Job not found" });
+    }
+
+    const jobData = jobDoc.data();
+
+    // Prepare updates
+    const updates = {
+      status,
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    // Add result if job is completed successfully
+    if (status === "completed" && result !== undefined) {
+      updates.result = result;
+    }
+
+    // Add error if job failed
+    if (status === "failed" && error !== undefined) {
+      updates.error = error;
+    }
+
+    // Update the job in the database
+    await db.collection("jobs").doc(jobId).update(updates);
+
+    // Get the updated job data
+    const updatedDoc = await db.collection("jobs").doc(jobId).get();
+    const updatedJob = { id: updatedDoc.id, ...updatedDoc.data() };
+
+    // Broadcast the update to the organization's WebSocket clients
+    if (jobData.organization_id) {
+      wsService.broadcastToOrganization(jobData.organization_id, {
+        type: "job_update",
+        job: updatedJob,
+      });
+    }
+
+    // Log the job status change
+    console.log(`Job ${jobId} status updated to: ${status}`);
+    if (status === "completed") {
+      console.log(`Job ${jobId} completed successfully`);
+    } else if (status === "failed") {
+      console.log(`Job ${jobId} failed:`, error);
+    }
+
+    res.json({
+      message: "Job status updated successfully",
+      job: updatedJob,
+    });
+  } catch (error) {
+    console.error("Error in job callback:", error);
+    res.status(500).json({ error: "Failed to update job status" });
+  }
+};
+
 module.exports = {
   getAllJobs,
   getJobById,
@@ -181,4 +350,5 @@ module.exports = {
   updateJob,
   deleteJob,
   getOrganizationJobs,
+  jobCallback,
 };
