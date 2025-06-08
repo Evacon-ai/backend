@@ -117,19 +117,19 @@ const createJob = async (req, res) => {
 
           const diagramData = diagramDoc.data();
 
-          if (!diagramData.previewUrl) {
+          if (!diagramData.preview_url) {
             throw new Error("Diagram preview URL not found");
           }
 
           // Build queue payload with preview_url
           queuePayload = {
             ...payload,
-            preview_url: diagramData.previewUrl,
+            preview_url: diagramData.preview_url,
           };
 
           console.log(
             `[Job ${jobId}] Extracted preview URL for diagram extraction:`,
-            diagramData.previewUrl
+            diagramData.preview_url
           );
         } catch (error) {
           console.error(
