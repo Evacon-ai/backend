@@ -83,12 +83,14 @@ const createJob = async (req, res) => {
 
     const docRef = await db.collection("jobs").add(newJob);
     const jobDoc = await docRef.get();
+    const jobId = jobDoc.id;
 
     res.status(201).json({ id: jobDoc.id, ...jobDoc.data() });
 
     // Process job based on type
     let queuePayload = payload;
-
+    console.log("[DEBUG] payload: ", payload);
+    console.log("[DEBUG] type: ", type);
     switch (type) {
       case "diagram_elements_extraction":
         try {
