@@ -6,7 +6,7 @@ async function enqueueJob({ jobId, jobType, payload, callbackUrl }) {
   const project = "evacon-ai";
   const location = "us-central1";
   const queue = "diagram-jobs";
-  const serviceUrl = `${process.env.TASK_WORKER_URL}/process-job`;
+  const serviceUrl = `${process.env.TASK_WORKER_URL}/api/process-job`;
   console.log("[DEBUG] service URL: ", serviceUrl);
   const parent = client.queuePath(project, location, queue);
 
