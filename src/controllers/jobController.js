@@ -170,7 +170,7 @@ const createJob = async (req, res) => {
 
     // Enqueue the job with the processed payload
     try {
-      const callbackUrl = `${process.env.BACKEND_URL}/callback`;
+      const callbackUrl = `${process.env.BACKEND_URL}/jobs/callback`;
       await enqueueJob({
         jobId,
         jobType: type,
