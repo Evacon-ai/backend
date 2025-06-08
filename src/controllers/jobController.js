@@ -168,7 +168,13 @@ const createJob = async (req, res) => {
 
     // Enqueue the job with the processed payload
     try {
-      await enqueueJob({ jobId, jobType: type, payload: queuePayload });
+      const callbackUrl = `${process.env.BACKEND_URL}/callback`;
+      await enqueueJob({
+        jobId,
+        jobType: type,
+        payload: queuePayload,
+        callbackUrl,
+      });
       console.log(`[Job ${jobId}] Successfully enqueued job of type: ${type}`);
     } catch (err) {
       console.warn(`[Job ${jobId}] Job queueing failed:`, err.message);
@@ -308,6 +314,49 @@ const jobCallback = async (req, res) => {
     // Add error if job failed
     if (status === "failed" && error !== undefined) {
       updates.error = error;
+    }
+
+    // Handle job-specific logic based on job type and status
+    switch (jobData.type) {
+      case "diagram_elements_extraction":
+        if (status === "completed" && result) {
+          try {
+            // Extract project_id and diagram_id from the original payload
+            const { project_id, diagram_id } = jobData.payload;
+
+            if (project_id && diagram_id) {
+              // Update the diagram document with extracted elements
+              await db
+                .collection("projects")
+                .doc(project_id)
+                .collection("diagrams")
+                .doc(diagram_id)
+                .update({
+                  elements: result.elements || [],
+                  extraction_completed_at:
+                    admin.firestore.FieldValue.serverTimestamp(),
+                  extraction_metadata: result.metadata || {},
+                });
+
+              console.log(
+                `[Job ${jobId}] Updated diagram ${diagram_id} with extracted elements`
+              );
+            }
+          } catch (diagramUpdateError) {
+            console.error(
+              `[Job ${jobId}] Failed to update diagram with extracted elements:`,
+              diagramUpdateError
+            );
+            // Don't fail the job callback, just log the error
+          }
+        }
+        break;
+      default:
+        // For unknown job types, just log
+        console.log(
+          `[Job ${jobId}] Job type '${jobData.type}' completed - no specific handling required`
+        );
+        break;
     }
 
     // Update the job in the database

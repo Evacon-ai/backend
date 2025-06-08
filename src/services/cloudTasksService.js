@@ -1,7 +1,7 @@
 const { CloudTasksClient } = require("@google-cloud/tasks");
 const client = new CloudTasksClient();
 
-async function enqueueJob({ jobId, jobType, payload }) {
+async function enqueueJob({ jobId, jobType, payload, callbackUrl }) {
   const project = "evacon-ai";
   const location = "us-west1";
   const queue = "diagram-jobs";
@@ -16,9 +16,9 @@ async function enqueueJob({ jobId, jobType, payload }) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: Buffer.from(JSON.stringify({ jobId, jobType, payload })).toString(
-        "base64"
-      ),
+      body: Buffer.from(
+        JSON.stringify({ jobId, jobType, payload, callbackUrl })
+      ).toString("base64"),
       oidcToken: {
         serviceAccountEmail: process.env.TASK_WORKER_SERVICE_ACCOUNT_EMAIL,
       },
