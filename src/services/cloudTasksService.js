@@ -2,11 +2,12 @@ const { CloudTasksClient } = require("@google-cloud/tasks");
 const client = new CloudTasksClient();
 
 async function enqueueJob({ jobId, jobType, payload, callbackUrl }) {
+  console.log("[DEBUG] enqueueJob launched");
   const project = "evacon-ai";
   const location = "us-west1";
   const queue = "diagram-jobs";
   const serviceUrl = `${process.env.TASK_WORKER_URL}/process-job`;
-
+  console.log("[DEBUG] service URL: ", serviceUrl);
   const parent = client.queuePath(project, location, queue);
 
   const task = {
@@ -24,9 +25,9 @@ async function enqueueJob({ jobId, jobType, payload, callbackUrl }) {
       },
     },
   };
-
+  console.log("[DEBUG] task: ", task);
   const [response] = await client.createTask({ parent, task });
-  console.log(`Task created: ${response.name}`);
+  console.log(`[DEBUG] Task created: ${response.name}`);
 }
 
 module.exports = { enqueueJob };
