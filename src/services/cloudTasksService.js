@@ -5,7 +5,7 @@ async function enqueueJob({ jobId, jobType, payload }) {
   const project = "evacon-ai";
   const location = "us-west1";
   const queue = "diagram-jobs";
-  const serviceUrl = "https://job-runner-abc123.a.run.app/process-job";
+  const serviceUrl = `${process.env.TASK_WORKER_URL}/process-job`;
 
   const parent = client.queuePath(project, location, queue);
 
@@ -20,7 +20,7 @@ async function enqueueJob({ jobId, jobType, payload }) {
         "base64"
       ),
       oidcToken: {
-        serviceAccountEmail: "task-invoker@evacon-ai.iam.gserviceaccount.com",
+        serviceAccountEmail: process.env.TASK_WORKER_SERVICE_ACCOUNT_EMAIL,
       },
     },
   };

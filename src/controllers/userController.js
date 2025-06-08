@@ -1,7 +1,6 @@
 const { db, admin } = require("../config/firebase");
 const password = require("secure-random-password");
 const axios = require("axios");
-const { FIREBASE_WEB_API_KEY } = require("../config/constants");
 
 const getCurrentUser = async (req, res) => {
   try {
@@ -107,7 +106,7 @@ const createUser = async (req, res) => {
 
       // Send password reset email using Firebase API
       const response = await axios.post(
-        `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${FIREBASE_WEB_API_KEY}`,
+        `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${process.env.FIREBASE_WEB_API_KEY}`,
         {
           requestType: "PASSWORD_RESET",
           email: email,
