@@ -4,7 +4,7 @@ const client = new CloudTasksClient();
 async function enqueueJob({ jobId, jobType, payload, callbackUrl }) {
   console.log("[DEBUG] enqueueJob launched");
   const project = "evacon-ai";
-  const location = "us-west1";
+  const location = "us-central1";
   const queue = "diagram-jobs";
   const serviceUrl = `${process.env.TASK_WORKER_URL}/process-job`;
   console.log("[DEBUG] service URL: ", serviceUrl);
