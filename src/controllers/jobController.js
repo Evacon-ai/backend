@@ -123,7 +123,6 @@ const createJob = async (req, res) => {
 
           // Build queue payload with preview_url
           queuePayload = {
-            ...payload,
             preview_url: diagramData.preview_url,
           };
 
